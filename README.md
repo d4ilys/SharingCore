@@ -207,6 +207,7 @@ public static async Task Test(int param)
         }
         catch (Exception e)
         {
+	    //如果多个库在执行SQL时出现异常，将全部回滚
             tran.Rellback();
         }
     }
