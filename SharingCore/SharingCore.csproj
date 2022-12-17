@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0</TargetFrameworks>
+	  <Nullable>enable</Nullable>
+	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
+	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <Authors>Daily</Authors>
+	  <Version>0.1.7.2</Version>
+	  <Description>基于FreeSql实现 跨库分页查询、分表查询、分布式事务</Description>
+	  <PackageId>Daily.FreeSql.SharingCore</PackageId>
+	  <Product>Daily.FreeSql.SharingCore</Product>
+	  <AssemblyName>Daily.FreeSql.SharingCore</AssemblyName>
+	  <PackageProjectUrl>https://www.nuget.org/packages/Daily.FreeSql.SharingCore/#readme-body-tab</PackageProjectUrl>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FreeSql" Version="3.2.665" />
+		<PackageReference Include="FreeSql.Repository" Version="3.2.665" />
+		<PackageReference Include="IdleBus" Version="1.5.2" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+</Project>
