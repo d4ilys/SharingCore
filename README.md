@@ -164,7 +164,7 @@ var list = await SharingCore.QueryAnyAsync(func =>
 }, query => query.Init(DBAll.Business, start, end));
 ~~~
 
-#### 10.分布式事务、跨库事务
+#### 10.分布式事务、多库事务
 
 ~~~C#
 public static async Task Test(int param)
