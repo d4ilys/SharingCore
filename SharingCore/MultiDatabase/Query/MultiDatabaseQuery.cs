@@ -61,6 +61,11 @@ namespace Daily.SharingCore.MultiDatabase.Query
                         k++;
                         var selectTime = year.SelectTime;
                         var dbWarp = DbWarpFactory.Get(queryParam.DbName, year.Year.ToString());
+                        if (dbWarp == null)
+                        {
+                            Console.WriteLine($"{queryParam.DbName},{year}不存在..");
+                            continue;
+                        }
                         dbKey = dbWarp.Name;
                         var _selectEndTime = selectTime.SelectEndTime;
                         var _selectStartTime = selectTime.SelectStartTime;
