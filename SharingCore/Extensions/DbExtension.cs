@@ -61,7 +61,8 @@ namespace Daily.SharingCore.Extensions
         /// <returns></returns>
         public static DbWarp GetDbWarp(this string DbName, string separateDbIdent = "", string tenant = "")
         {
-            return string.IsNullOrWhiteSpace(separateDbIdent) ? DbWarpFactory.Get(DbName, tenant) : DbWarpFactory.Get(DbName, separateDbIdent, tenant);
+            return string.IsNullOrWhiteSpace(separateDbIdent) ?
+               DbWarpFactory.Get(DbName, tenant) : DbWarpFactory.Get(DbName, separateDbIdent, tenant);
         }
 
 
