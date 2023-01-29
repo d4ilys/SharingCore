@@ -1,0 +1,26 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Daily.SharingCore.Assemble;
+using Microsoft.AspNetCore.Builder;
+
+namespace SharingCore.Extensions
+{
+    public static class IApplicationBuilderExtension
+    {
+        /// <summary>
+        /// 对SharingCore中间件一些配置
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="func"></param>
+        /// <returns></returns>
+        public static string UseSharingCore(this string builder, Func<string> func)
+        {
+            var tenant = func?.Invoke();
+            //配置全局租户
+            if (tenant != null)
+                DbWarpFactory.SetTenant(tenant);
+            return builder;
+        }
+    }
+}

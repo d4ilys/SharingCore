@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Daily.SharingCore.Assemble;
 using Daily.SharingCore.Assemble.Model;
+using Daily.SharingCore.Extensions;
 using Daily.SharingCore.MultiDatabase.Model;
 using Daily.SharingCore.MultiDatabase.Transcation;
 using Daily.SharingCore.MultiDatabase.Wrapper;
@@ -49,7 +50,7 @@ namespace Daily.SharingCore.MultiDatabase.NoQuery
                 var dbWarpList = new List<DbWarp>();
                 foreach (var year in yearArray)
                 {
-                    var warp = DbWarpFactory.Get(queryParam.DbName, year.Year.ToString());
+                    var warp = queryParam.DbName.GetDbWarp(year.Year.ToString(),queryParam.Tenant);
                     dbWarpList.Add(warp);
                 }
 
