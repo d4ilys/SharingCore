@@ -14,7 +14,7 @@ namespace SharingCore.Extensions
         /// <param name="builder"></param>
         /// <param name="func"></param>
         /// <returns></returns>
-        public static string UseSharingCore(this string builder, Func<string> func)
+        public static IApplicationBuilder UseSharingCore(this IApplicationBuilder builder, Func<string> func)
         {
             var tenant = func?.Invoke();
             //配置全局租户
