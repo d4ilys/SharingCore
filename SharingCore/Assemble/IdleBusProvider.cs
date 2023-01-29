@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using Daily.SharingCore.Assemble.Model;
-using Daily.SharingCore.Common;
+﻿using Daily.SharingCore.Assemble.Model;
 using Daily.SharingCore.MultiDatabase.Utils;
 using FreeSql;
 using FreeSql.Aop;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using SharingCore.Assemble.Enums;
+using SharingCore.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace Daily.SharingCore.Assemble
 {
@@ -23,7 +21,6 @@ namespace Daily.SharingCore.Assemble
     {
         private static readonly object LockObject = new object();
         public static IdleBus<IFreeSql>? Instance = null;
-        private static readonly List<object> FilterList = new List<object>();
 
         /// <summary>
         /// 初始化FreeSql对象，存放入IdleBus
@@ -49,23 +46,24 @@ namespace Daily.SharingCore.Assemble
         }
 
         /// <summary>
-        /// 初始化时所有FreeSql对象,存放入IdleBus,并声明全局过滤器
+        /// 初始化时所有FreeSql对象,存放入IdleBus,并声明FreeSql全局过滤器
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="configuration"></param>
         /// <param name="filter"></param>
-        public static void InitIdleBus<T>(IConfiguration configuration, Expression<Func<T, bool>> filter,
+        public static void InitIdleBus<T>(IConfiguration configuration, Expression<Func<T, bool>>? filter,
             Func<IEnumerable<DbConfig>>? initDbConfig = null)
         {
-            FilterList.Add(filter);
-
             void Init()
             {
                 //全局过滤器
-                InitCommon(configuration, db =>
+                InitCommon(configuration, (db, name) =>
                 {
-                    db.GlobalFilter.Apply("GlobalFilters",
-                        FilterList.FirstOrDefault() as Expression<Func<T, bool>>);
+                    if (filter != null)
+                    {
+                        db.GlobalFilter.Apply($"GlobalFilters_{Guid.NewGuid()}", filter);
+                    }
+
                     return db;
                 }, initDbConfig);
             }
@@ -81,7 +79,63 @@ namespace Daily.SharingCore.Assemble
             });
         }
 
-        private static void InitCommon(IConfiguration configuration, Func<IFreeSql, IFreeSql>? filterFunc = null,
+        /// <summary>
+        /// 初始化时所有FreeSql对象,存放入IdleBus,并声明FreeSql全局过滤器
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="configuration"></param>
+        /// <param name="filters"></param>
+        public static void InitIdleBus<T>(IConfiguration configuration,
+            Dictionary<string, Expression<Func<T, bool>>?> filters,
+            Func<IEnumerable<DbConfig>>? initDbConfig = null)
+        {
+            void Init()
+            {
+                //全局过滤器
+                InitCommon(configuration, (db, name) =>
+                {
+                    //在所有库中查找对应的过滤器
+                    var exist = filters.TryGetValue(name, out var value);
+                    switch (exist)
+                    {
+                        case true:
+                        {
+                            //如果指定了过滤器，但是设置的值为NULL，则不做任何处理
+                            var visitor = new FreeSqlFilterExpressionVisitor();
+                            visitor.Visit(value);
+                            if (value != null && visitor.IsNon() == false)
+                                db.GlobalFilter.Apply($"{name}_GlobalFilters_{Guid.NewGuid()}", value);
+
+                            break;
+                        }
+                        case false: //如果没有指定过滤器 则使用 通用过滤器
+                        {
+                            var existCommunalFilter =
+                                filters.TryGetValue(FreeSqlFilterType.Communal, out var communalFilter);
+                            if (existCommunalFilter)
+                                db.GlobalFilter.Apply($"{name}_GlobalFilters_{Guid.NewGuid()}", communalFilter);
+                            break;
+                        }
+                    }
+
+                    return db;
+                }, initDbConfig);
+            }
+
+            Init();
+            ChangeToken.OnChange(() => configuration?.GetReloadToken(), () =>
+            {
+                //热更新
+                if (configuration != null)
+                {
+                    Init();
+                }
+            });
+        }
+
+
+        private static void InitCommon(IConfiguration configuration,
+            Func<IFreeSql, string, IFreeSql>? filterFunc = null,
             Func<IEnumerable<DbConfig>>? initDbConfig = null)
         {
             try
@@ -91,7 +145,7 @@ namespace Daily.SharingCore.Assemble
                 {
                     lock (LockObject)
                     {
-                        Instance ??= new IdleBus<IFreeSql>(TimeSpan.FromHours(1));
+                        Instance ??= new IdleBus<IFreeSql>(TimeSpan.MaxValue);
                     }
                 }
 
@@ -131,7 +185,7 @@ namespace Daily.SharingCore.Assemble
                 if (initDbConfig != null)
                 {
                     dbConfigs ??= new List<DbConfig>();
-
+                    var s = initDbConfig.Invoke();
                     dbConfigs.AddRange(initDbConfig.Invoke());
                 }
 
@@ -149,6 +203,7 @@ namespace Daily.SharingCore.Assemble
                         }
                     }
 
+                    Console.WriteLine(item.Key);
 
                     Instance.Register(item.Key, () =>
                     {
@@ -179,7 +234,7 @@ namespace Daily.SharingCore.Assemble
                         //全局过滤器
                         if (filterFunc != null && item.IsFilter)
                         {
-                            freeSql = filterFunc(freeSql);
+                            freeSql = filterFunc(freeSql, item.Key);
                         }
 
                         //定义过滤器，重写异常
@@ -198,7 +253,6 @@ namespace Daily.SharingCore.Assemble
                         //        throw e;
                         //    }
                         //};
-
                         //监控日志，拼接字符串
                         freeSql.Aop.CurdAfter += (sender, args) =>
                         {

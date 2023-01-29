@@ -173,8 +173,8 @@ namespace Daily.SharingCore.MultiDatabase.Transcation
             if (isSuccess == false)
             {
                 //删除日志
-                //_iFreeSqlCollect.First().Instance.Delete<multi_transaction_log>().Where(m => m.id == logId)
-                //    .ExecuteAffrows();
+                _iFreeSqlCollect.First().Instance.Delete<multi_transaction_log>().Where(m => m.id == logId)
+                    .ExecuteAffrows();
             }
             else
             {

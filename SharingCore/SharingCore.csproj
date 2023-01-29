@@ -6,12 +6,12 @@
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	  <Authors>Daily</Authors>
-	  <Version>0.1.7.2</Version>
+	  <Version>0.1.7.3</Version>
 	  <Description>基于FreeSql实现 跨库分页查询、分表查询、分布式事务</Description>
 	  <PackageId>Daily.FreeSql.SharingCore</PackageId>
 	  <Product>Daily.FreeSql.SharingCore</Product>
 	  <AssemblyName>Daily.FreeSql.SharingCore</AssemblyName>
-	  <PackageProjectUrl>https://www.nuget.org/packages/Daily.FreeSql.SharingCore/#readme-body-tab</PackageProjectUrl>
+	  <PackageProjectUrl>https://github.com/d4ilys/SharingCore</PackageProjectUrl>
   </PropertyGroup>
 
 	<ItemGroup>

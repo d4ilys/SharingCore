@@ -29,7 +29,6 @@ mono_crash.*
 [Rr]eleases/
 x64/
 x86/
-.vshistory/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
@@ -41,6 +40,7 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
+.vshistory
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
