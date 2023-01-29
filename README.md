@@ -57,6 +57,13 @@ var builder = WebApplication.CreateBuilder(args).InjectSharingCore(); //注入
 builder.Services.AddSharingCore();
 //全局过滤器
 builder.Services.AddSharingCore<FreeSqlFilter>(f => f.isDelete == 0);
+//指定过滤器
+builder.Services.AddSharingCore(new Dictionary<string, Expression<Func<TSPFreeSqlFilter, bool>>>()
+{
+	{ DbEnum.Basics, f => f.isDel == 0 }, //此库指定过滤器
+	{ DbEnum.Common, f => false }, //此库不指定过滤器
+	{ FreeSqlFilterType.Communal, f => f.isDelete == 0 } //其他库公用的过滤器
+});
 ~~~
 
 > ASP.NET Core 3.1/5.0 Program.cs中
