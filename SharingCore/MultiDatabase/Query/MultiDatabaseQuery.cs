@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Daily.SharingCore.Assemble;
+using Daily.SharingCore.Extensions;
 using Daily.SharingCore.MultiDatabase.Model;
 using FreeSharding.SeparateDatabase;
 using FreeSql;
@@ -60,12 +61,13 @@ namespace Daily.SharingCore.MultiDatabase.Query
                     {
                         k++;
                         var selectTime = year.SelectTime;
-                        var dbWarp = DbWarpFactory.Get(queryParam.DbName, year.Year.ToString());
+                        var dbWarp = queryParam.DbName.GetDbWarp(year.Year.ToString(), queryParam.Tenant);
                         if (dbWarp == null)
                         {
                             Console.WriteLine($"{queryParam.DbName},{year}不存在..");
                             continue;
                         }
+
                         dbKey = dbWarp.Name;
                         var _selectEndTime = selectTime.SelectEndTime;
                         var _selectStartTime = selectTime.SelectStartTime;
@@ -101,19 +103,21 @@ namespace Daily.SharingCore.MultiDatabase.Query
                                     StartTime = _selectStartTime,
                                     Skip = sikp,
                                     HowMany = k,
-                                    PageSize =queryParam.PageSize
+                                    PageSize = queryParam.PageSize
                                 };
                                 //这里是第二次执行，上次的查询的条数和分页的条数是一致的，证明下一次查询没必要翻页，或者没必要查询
-                                if (k > 1 && taskList.Count == queryParam.PageSize && taskList.Count !=0)
+                                if (k > 1 && taskList.Count == queryParam.PageSize && taskList.Count != 0)
                                 {
                                     param.CurrPage = 0;
                                     //第二次可以不查询
                                     param.CanNotQuery = true;
                                 }
+
                                 queryFuncResult = func.Invoke(param);
                                 break;
                             }
                         }
+
                         var collection = queryFuncResult.Result;
                         //判断第一个库是否还能查询到数据或者数据量否足够一页
                         if (collection.Count != 0 || taskList.Count < queryParam.PageSize)
@@ -321,7 +325,7 @@ namespace Daily.SharingCore.MultiDatabase.Query
                     try
                     {
                         var selectTime = year.SelectTime;
-                        var ifreesql = DbWarpFactory.Get(queryParam.DbName, year.Year.ToString());
+                        var ifreesql = queryParam.DbName.GetDbWarp(year.Year.ToString(), queryParam.Tenant);
                         var _selectEndTime = selectTime.SelectEndTime;
                         var _selectStartTime = selectTime.SelectStartTime;
                         var param = new QueryFuncParam()

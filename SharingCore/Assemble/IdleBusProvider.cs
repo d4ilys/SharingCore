@@ -203,8 +203,6 @@ namespace Daily.SharingCore.Assemble
                         }
                     }
 
-                    Console.WriteLine(item.Key);
-
                     Instance.Register(item.Key, () =>
                     {
                         //创建FreeSql对象
