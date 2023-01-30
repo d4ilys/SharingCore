@@ -42,7 +42,7 @@ namespace Daily.SharingCore.MultiDatabase.Query
                     param.EndTime = queryParam.EndTime;
                     param.StrideYear = 1; //几年一次库
                 }).YearTimeData;
-                yearArray.Reverse();
+                //yearArray.Reverse();
                 //记录第一次查询的页数
                 long size = 0;
                 //偏移量

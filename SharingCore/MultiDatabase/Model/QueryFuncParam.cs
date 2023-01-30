@@ -38,7 +38,8 @@ namespace Daily.SharingCore.MultiDatabase.Model
             {
                 flag = true;
             }
-            else if ((this.CurrPage * this.PageSize - PageSize) > count && HowMany == 1)
+            //全完开始第二库查询后，第一次查询就不用了
+            else if (HowMany == 1 && (this.CurrPage * this.PageSize - PageSize) > count)
             {
                 flag = true;
             }

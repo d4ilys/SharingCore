@@ -16,7 +16,7 @@ namespace Daily.SharingCore.MultiDatabase.Wrapper
     /// <summary>
     /// 包装类
     /// </summary>
-    public class SharingCore
+    public class SharingCores
     {
         /// <summary>
         /// 多库事务

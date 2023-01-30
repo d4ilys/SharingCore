@@ -9,49 +9,49 @@ namespace Daily.SharingCore.Extensions
 {
     public static class ISelectExtension
     {
-        public static ISelect<T> PageCore<T>(this ISelect<T> select, int limit, QueryFuncParam param, out long count)
+        public static ISelect<T> PageCore<T>(this ISelect<T> select,  QueryFuncParam param, out long count)
         {
-            return select.Limit(limit).Offset((param.CurrPage - 1) * limit + param.Skip).Count(out count);
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
 
-        public static ISelect<T1, T2> PageCore<T1, T2>(this ISelect<T1, T2> select, int limit, QueryFuncParam param,
+        public static ISelect<T1, T2> PageCore<T1, T2>(this ISelect<T1, T2> select,  QueryFuncParam param,
             out long count)
             where T2 : class
         {
-            return select.Limit(limit).Offset((param.CurrPage - 1) * limit + param.Skip).Count(out count);
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
 
-        public static ISelect<T1, T2, T3> PageCore<T1, T2, T3>(this ISelect<T1, T2, T3> select, int limit,
+        public static ISelect<T1, T2, T3> PageCore<T1, T2, T3>(this ISelect<T1, T2, T3> select, 
             QueryFuncParam param, out long count) where T3 : class where T2 : class
         {
-            return select.Limit(limit).Offset((param.CurrPage - 1) * limit + param.Skip).Count(out count);
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
 
         public static ISelect<T1, T2, T3, T4> PageCore<T1, T2, T3, T4>(this ISelect<T1, T2, T3, T4> select,
-            int limit, QueryFuncParam param, out long count) where T4 : class where T3 : class where T2 : class
+             QueryFuncParam param, out long count) where T4 : class where T3 : class where T2 : class
         {
-            return select.Limit(limit).Offset((param.CurrPage - 1) * limit + param.Skip).Count(out count);
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
 
         public static ISelect<T1, T2, T3, T4, T5> PageCore<T1, T2, T3, T4, T5>(
             this ISelect<T1, T2, T3, T4, T5> select,
-            int limit, QueryFuncParam param, out long count) where T4 : class
+             QueryFuncParam param, out long count) where T4 : class
             where T3 : class
             where T2 : class
             where T5 : class
         {
-            return select.Limit(limit).Offset((param.CurrPage - 1) * limit + param.Skip).Count(out count);
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
 
         public static ISelect<T1, T2, T3, T4, T5, T6> PageCore<T1, T2, T3, T4, T5, T6>(
             this ISelect<T1, T2, T3, T4, T5, T6> select,
-            int limit, QueryFuncParam param, out long count) where T4 : class
+             QueryFuncParam param, out long count) where T4 : class
             where T3 : class
             where T2 : class
             where T5 : class
             where T6 : class
         {
-            return select.Limit(limit).Offset((param.CurrPage - 1) * limit + param.Skip).Count(out count);
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
     }
 
@@ -78,7 +78,7 @@ namespace Daily.SharingCore.Extensions
             Expression<Func<T1, T2, TReturn>> param, QueryFuncParam func, long count) where T2 : class
         {
             var list = new List<TReturn>();
-            if (!func.CanNotQueryFn(count)) //执行不执行查询，提升性能
+            if (func.CanNotQueryFn(count) == false) //执行不执行查询，提升性能
                 list = select.ToList(param);
             return list;
         }
