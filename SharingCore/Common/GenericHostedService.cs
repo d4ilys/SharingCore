@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 
-namespace Daily.SharingCore.Common
+namespace SharingCore.Common
 {
     public class GenericHostedService : IHostedService
     {
@@ -13,7 +13,7 @@ namespace Daily.SharingCore.Common
         public GenericHostedService(IHost host)
         {
             // 存储根服务
-            InternalApp.RootServices = host.Services;
+            SharingCoreUtils.Services = host.Services;
         }
 
         /// <summary>

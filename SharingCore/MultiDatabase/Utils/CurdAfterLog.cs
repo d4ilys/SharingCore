@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Daily.SharingCore.Assemble.Model;
+using SharingCore.Assemble.Model;
 
-namespace Daily.SharingCore.MultiDatabase.Utils
+namespace SharingCore.MultiDatabase.Utils
 {
     public class CurdAfterLog
     {

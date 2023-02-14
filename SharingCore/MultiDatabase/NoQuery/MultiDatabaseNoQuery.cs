@@ -5,17 +5,17 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Daily.SharingCore.Assemble;
-using Daily.SharingCore.Assemble.Model;
-using Daily.SharingCore.Extensions;
-using Daily.SharingCore.MultiDatabase.Model;
-using Daily.SharingCore.MultiDatabase.Transcation;
-using Daily.SharingCore.MultiDatabase.Wrapper;
+using SharingCore.Assemble;
+using SharingCore.Assemble.Model;
+using SharingCore.Extensions;
+using SharingCore.MultiDatabase.Model;
+using SharingCore.MultiDatabase.Transcation;
+using SharingCore.MultiDatabase.Wrapper;
 using FreeSharding.SeparateDatabase;
 using FreeSql;
 using Newtonsoft.Json;
 
-namespace Daily.SharingCore.MultiDatabase.NoQuery
+namespace SharingCore.MultiDatabase.NoQuery
 {
     public class MultiDatabaseNoQuery
     {

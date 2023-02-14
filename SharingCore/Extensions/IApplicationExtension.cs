@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Daily.SharingCore.Assemble;
+using SharingCore.Assemble;
 using Microsoft.AspNetCore.Builder;
 
 namespace SharingCore.Extensions

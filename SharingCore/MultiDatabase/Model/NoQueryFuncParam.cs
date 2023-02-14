@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace Daily.SharingCore.MultiDatabase.Model
+namespace SharingCore.MultiDatabase.Model
 {
     public class NoQueryFuncParam
     {

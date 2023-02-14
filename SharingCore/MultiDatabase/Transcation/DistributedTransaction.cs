@@ -6,15 +6,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Daily.SharingCore.Assemble.Model;
-using Daily.SharingCore.Common;
-using Daily.SharingCore.MultiDatabase.Model;
-using Daily.SharingCore.MultiDatabase.Utils;
+using SharingCore.Assemble.Model;
+using SharingCore.Common;
+using SharingCore.MultiDatabase.Model;
+using SharingCore.MultiDatabase.Utils;
 using FreeSql.Internal.ObjectPool;
 using Newtonsoft.Json;
 using static FreeSql.Internal.GlobalFilter;
 
-namespace Daily.SharingCore.MultiDatabase.Transcation
+namespace SharingCore.MultiDatabase.Transcation
 {
     public class DistributedTransaction : IDisposable
     {

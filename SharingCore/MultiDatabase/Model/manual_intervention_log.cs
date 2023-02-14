@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Text;
 using FreeSql.DataAnnotations;
 
-namespace Daily.SharingCore.MultiDatabase.Model
+namespace SharingCore.MultiDatabase.Model
 {
     public class manual_intervention_log
     {

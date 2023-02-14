@@ -5,13 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Daily.SharingCore.Assemble.Model;
-using Daily.SharingCore.MultiDatabase.Model;
-using Daily.SharingCore.MultiDatabase.NoQuery;
-using Daily.SharingCore.MultiDatabase.Query;
-using Daily.SharingCore.MultiDatabase.Transcation;
+using SharingCore.Assemble.Model;
+using SharingCore.MultiDatabase.Model;
+using SharingCore.MultiDatabase.NoQuery;
+using SharingCore.MultiDatabase.Query;
+using SharingCore.MultiDatabase.Transcation;
+using SharingCore.MultiDatabase.Wrapper;
 
-namespace Daily.SharingCore.MultiDatabase.Wrapper
+namespace SharingCore.MultiDatabase.Wrapper
 {
     /// <summary>
     /// 包装类
@@ -29,6 +30,7 @@ namespace Daily.SharingCore.MultiDatabase.Wrapper
             local.Value = new DistributedTransaction(param.ToList());
             return local.Value;
         }
+
         /// <summary>
         /// 跨库分页查询，包装方法
         /// </summary>
@@ -38,7 +40,6 @@ namespace Daily.SharingCore.MultiDatabase.Wrapper
         /// <param name="count"></param>
         /// <returns></returns>
         /// 
-
         public static List<T> QueryPageList<T>(Func<QueryFuncParam, QueryFuncResult<T>> func,
             Action<QueryParam> queryParamAction, out long count)
         {
@@ -139,6 +140,15 @@ namespace Daily.SharingCore.MultiDatabase.Wrapper
             multiDatabaseNoQuery.OnCommitFail = compensation;
             var result = multiDatabaseNoQuery.NoQuery<T>(func, queryParamAction);
             return result;
+        }
+
+        /// <summary>
+        /// 数据库枚举
+        /// </summary>
+        public static SharingCoreDbs Dbs
+        {
+            get { return new SharingCoreDbs(); }
+            private set { }
         }
     }
 }

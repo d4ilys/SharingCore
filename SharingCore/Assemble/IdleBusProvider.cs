@@ -1,5 +1,5 @@
-﻿using Daily.SharingCore.Assemble.Model;
-using Daily.SharingCore.MultiDatabase.Utils;
+﻿using SharingCore.Assemble.Model;
+using SharingCore.MultiDatabase.Utils;
 using FreeSql;
 using FreeSql.Aop;
 using Microsoft.Extensions.Configuration;
@@ -11,8 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using SharingCore.Extensions;
 
-namespace Daily.SharingCore.Assemble
+namespace SharingCore.Assemble
 {
     /// <summary>
     /// 对象管理容器-IFeeSql实例提供者
@@ -27,11 +28,11 @@ namespace Daily.SharingCore.Assemble
         /// </summary>
         /// <param name="configuration"></param>
         /// <returns></returns>
-        public static void InitIdleBus(IConfiguration configuration, Func<IEnumerable<DbConfig>>? initDbConfig = null)
+        public static void InitIdleBus(IConfiguration configuration, SharingCoreOptions? options)
         {
             void Init()
             {
-                InitCommon(configuration, null, initDbConfig);
+                InitCommon(configuration, options, null);
             }
 
             Init();
@@ -52,12 +53,12 @@ namespace Daily.SharingCore.Assemble
         /// <param name="configuration"></param>
         /// <param name="filter"></param>
         public static void InitIdleBus<T>(IConfiguration configuration, Expression<Func<T, bool>>? filter,
-            Func<IEnumerable<DbConfig>>? initDbConfig = null)
+            SharingCoreOptions? options)
         {
             void Init()
             {
                 //全局过滤器
-                InitCommon(configuration, (db, name) =>
+                InitCommon(configuration, options, (db, name) =>
                 {
                     if (filter != null)
                     {
@@ -65,7 +66,7 @@ namespace Daily.SharingCore.Assemble
                     }
 
                     return db;
-                }, initDbConfig);
+                });
             }
 
             Init();
@@ -86,13 +87,12 @@ namespace Daily.SharingCore.Assemble
         /// <param name="configuration"></param>
         /// <param name="filters"></param>
         public static void InitIdleBus<T>(IConfiguration configuration,
-            Dictionary<string, Expression<Func<T, bool>>?> filters,
-            Func<IEnumerable<DbConfig>>? initDbConfig = null)
+            Dictionary<string, Expression<Func<T, bool>>?>? filters, SharingCoreOptions options)
         {
             void Init()
             {
                 //全局过滤器
-                InitCommon(configuration, (db, name) =>
+                InitCommon(configuration, options, (db, name) =>
                 {
                     //在所有库中查找对应的过滤器
                     var exist = filters.TryGetValue(name, out var value);
@@ -119,7 +119,7 @@ namespace Daily.SharingCore.Assemble
                     }
 
                     return db;
-                }, initDbConfig);
+                });
             }
 
             Init();
@@ -134,9 +134,8 @@ namespace Daily.SharingCore.Assemble
         }
 
 
-        private static void InitCommon(IConfiguration configuration,
-            Func<IFreeSql, string, IFreeSql>? filterFunc = null,
-            Func<IEnumerable<DbConfig>>? initDbConfig = null)
+        private static void InitCommon(IConfiguration configuration, SharingCoreOptions? options,
+            Func<IFreeSql, string, IFreeSql>? filterFunc = null)
         {
             try
             {
@@ -146,12 +145,15 @@ namespace Daily.SharingCore.Assemble
                     lock (LockObject)
                     {
                         Instance ??= new IdleBus<IFreeSql>(TimeSpan.MaxValue);
+                        SharingCoreUtils.InitMehtodCache();
                     }
                 }
 
                 //获取到Apollo统一配置中心的数据信息
                 //初始化数据库对象，支持配置文件和自定义
-                var configName = "SharingCoreDbConfig";
+                var configName = string.IsNullOrWhiteSpace(options?.DBConfigKey)
+                    ? "SharingCoreDbConfig"
+                    : options?.DBConfigKey;
 
 
                 var dbConfigs = configuration.GetSection(configName)?.Get<List<DbConfig>>();
@@ -182,11 +184,10 @@ namespace Daily.SharingCore.Assemble
                     }
                 }
 
-                if (initDbConfig != null)
+                if (options?.CustomDbConfigs != null)
                 {
                     dbConfigs ??= new List<DbConfig>();
-                    var s = initDbConfig.Invoke();
-                    dbConfigs.AddRange(initDbConfig.Invoke());
+                    dbConfigs.AddRange(options?.CustomDbConfigs);
                 }
 
                 //连接放入对象管理器
@@ -202,7 +203,15 @@ namespace Daily.SharingCore.Assemble
                         {
                         }
                     }
-
+                    //是否开启了按需加载
+                    if (options.DemandLoading)
+                    {
+                        //如果扩展方法中没有这个数据库则跳出循环
+                        if (!SharingCoreUtils.TryIsLoad(item.Key))
+                        {
+                            continue;
+                        }
+                    }
                     Instance.Register(item.Key, () =>
                     {
                         //创建FreeSql对象

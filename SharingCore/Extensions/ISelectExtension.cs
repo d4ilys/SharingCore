@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
-using Daily.SharingCore.MultiDatabase.Model;
+using SharingCore.MultiDatabase.Model;
 using FreeSql;
 
-namespace Daily.SharingCore.Extensions
+namespace SharingCore.Extensions
 {
     public static class ISelectExtension
     {

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Daily.SharingCore.Assemble.Model;
+using SharingCore.Assemble.Model;
 
-namespace Daily.SharingCore.MultiDatabase.Transcation
+namespace SharingCore.MultiDatabase.Transcation
 {
     public class MultiDatabaseTransaction
     {

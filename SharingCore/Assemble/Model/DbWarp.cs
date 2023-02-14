@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Daily.SharingCore.Assemble.Model
+namespace SharingCore.Assemble.Model
 {
     public class DbWarp
     {

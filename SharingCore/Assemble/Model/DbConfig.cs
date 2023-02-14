@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using FreeSql;
 
-namespace Daily.SharingCore.Assemble.Model
+namespace SharingCore.Assemble.Model
 {
     public class DbConfig
     {

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Daily.SharingCore.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-[assembly: HostingStartup(typeof(Daily.SharingCore.Common.DefaultInject))]
-namespace Daily.SharingCore.Common
+[assembly: HostingStartup(typeof(SharingCore.Common.DefaultInject))]
+namespace SharingCore.Common
 {
     internal class DefaultInject : IHostingStartup
     {
@@ -15,7 +14,7 @@ namespace Daily.SharingCore.Common
             builder.ConfigureServices((context, services) =>
             {
                 // 存储配置对象
-                InternalApp.Configuration = context.Configuration;
+                SharingCoreUtils.Configuration = context.Configuration;
 
                 services.AddHostedService<GenericHostedService>();
 

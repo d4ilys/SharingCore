@@ -1,9 +1,9 @@
-﻿using Daily.SharingCore.Common;
+﻿using SharingCore.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Daily.SharingCore.Extensions
+namespace SharingCore.Extensions
 {
     public static class Hosting
     {
@@ -12,7 +12,7 @@ namespace Daily.SharingCore.Extensions
             builder.ConfigureServices((hostContext, services) =>
             {
                 // 存储配置对象
-                InternalApp.Configuration = hostContext.Configuration;
+                SharingCoreUtils.Configuration = hostContext.Configuration;
 
                 services.AddHostedService<GenericHostedService>();
 

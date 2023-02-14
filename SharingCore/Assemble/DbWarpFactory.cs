@@ -1,10 +1,7 @@
-﻿using Daily.SharingCore.Assemble.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using SharingCore.Assemble.Model;
 using System.Threading;
 
-namespace Daily.SharingCore.Assemble
+namespace SharingCore.Assemble
 {
     /// <summary>
     /// 数据库包装类工厂方法

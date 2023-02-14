@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Daily.SharingCore.MultiDatabase.Model
+namespace SharingCore.MultiDatabase.Model
 {
     public class QueryParam
     {
