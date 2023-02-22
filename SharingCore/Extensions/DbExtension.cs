@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using FreeSql;
 using SharingCore.Assemble;
 using SharingCore.Assemble.Model;
 
@@ -70,7 +71,7 @@ namespace SharingCore.Extensions
         /// 直接通过数据库标识获取FreeSql对象
         /// </summary>
         /// <param name="dbName">数据库标识，对应配置文件中的Identification</param>
-        /// <param name="separateDbIdent">分库标识，默认是当前年</param>
+        /// <param name="separateDbIdent">分库标识，默认没有分库标识</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
         /// <remarks>提示：数据库标识(对应配置文件中的Identification) + 租户标识(租户标识，默认没有租户) + 分库标识(分库标识，默认是当前年) = 数据库名称(对应配置文件中的Key)</remarks>
         /// <returns></returns>
@@ -79,12 +80,23 @@ namespace SharingCore.Extensions
             return GetDbWarp(dbName, separateDbIdent, tenant).Instance;
         }
 
-
         /// <summary>
-        /// 直接通过数据库标识获取DbWarp对象，默认是当前年
+        /// 直接通过数据库标识获取FreeSql对象 - 当前年
         /// </summary>
         /// <param name="dbName">数据库标识，对应配置文件中的Identification</param>
-        /// <param name="separateDbIdent">分库标识，默认是当前年</param>
+        /// <param name="tenant">租户标识，默认没有租户</param>
+        /// <remarks>提示：数据库标识(对应配置文件中的Identification) + 租户标识(租户标识，默认没有租户) + 分库标识(分库标识，默认是当前年) = 数据库名称(对应配置文件中的Key)</remarks>
+        /// <returns></returns>
+        public static IFreeSql GetNowFreeSql(this string dbName, string tenant = "")
+        {
+            return GetFreeSql(dbName,DateTime.Now.Year.ToString(), tenant);
+        }
+
+        /// <summary>
+        /// 直接通过数据库标识获取DbWarp对象
+        /// </summary>
+        /// <param name="dbName">数据库标识，对应配置文件中的Identification</param>
+        /// <param name="separateDbIdent">分库标识，默认没有分库标识</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
         /// <remarks>提示：数据库标识(对应配置文件中的Identification) + 租户标识(租户标识，默认没有租户) + 分库标识(分库标识，默认是当前年) = 数据库名称(对应配置文件中的Key)</remarks>
         /// <returns></returns>
@@ -95,6 +107,17 @@ namespace SharingCore.Extensions
                 : DbWarpFactory.Get(dbName, separateDbIdent, tenant);
         }
 
+        /// <summary>
+        /// 直接通过数据库标识获取DbWarp对象 - 当前年
+        /// </summary>
+        /// <param name="dbName">数据库标识，对应配置文件中的Identification</param>
+        /// <param name="tenant">租户标识，默认没有租户</param>
+        /// <remarks>提示：数据库标识(对应配置文件中的Identification) + 租户标识(租户标识，默认没有租户) + 分库标识(分库标识，默认是当前年) = 数据库名称(对应配置文件中的Key)</remarks>
+        /// <returns></returns>
+        public static DbWarp GetNowDbWarp(this string dbName, string tenant = "")
+        {
+            return GetDbWarp(dbName, DateTime.Now.Year.ToString(), tenant);
+        }
 
         /// <summary>
         /// 根据日期判断表是否存在，如果不存在则创建。
@@ -153,5 +176,10 @@ namespace SharingCore.Extensions
         /// 父项目的Assembly，用于扫描SharingCoreDbs扩展方法
         /// </summary>
         public Assembly? BaseReferenceAssembly { get; set; } = null;
+
+        /// <summary>
+        /// 对不同库的FreeSqlBuilder进行扩展注入
+        /// </summary>
+        public Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>? FreeSqlBuildersInject = new Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>();
     }
 }

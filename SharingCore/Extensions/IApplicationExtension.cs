@@ -12,7 +12,7 @@ namespace SharingCore.Extensions
         /// 对SharingCore中间件一些配置
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="func"></param>
+        /// <param name="func">通过HTTP管道获取每次用户请求所属的租户</param>
         /// <returns></returns>
         public static IApplicationBuilder UseSharingCore(this IApplicationBuilder builder, Func<string> func)
         {

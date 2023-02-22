@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using SharingCore.Extensions;
+using System.Xml.Linq;
 
 namespace SharingCore.Assemble
 {
@@ -203,6 +204,7 @@ namespace SharingCore.Assemble
                         {
                         }
                     }
+
                     //是否开启了按需加载
                     if (options.DemandLoading)
                     {
@@ -212,6 +214,7 @@ namespace SharingCore.Assemble
                             continue;
                         }
                     }
+
                     Instance.Register(item.Key, () =>
                     {
                         //创建FreeSql对象
@@ -235,11 +238,17 @@ namespace SharingCore.Assemble
                             //配置读写分离
                             freeSqlBuild.UseSlave(item.Slaves.ToArray());
                         }
+                        //FreeSqlBuilder扩展
+                        var exist = options.FreeSqlBuildersInject.TryGetValue(item.Key, out var value);
+                        if (exist)
+                        {
+                            freeSqlBuild = value?.Invoke(freeSqlBuild);
+                        }
 
                         //开始注册
                         var freeSql = freeSqlBuild.Build();
                         //全局过滤器
-                        if (filterFunc != null && item.IsFilter)
+                        if (filterFunc != null)
                         {
                             freeSql = filterFunc(freeSql, item.Key);
                         }
