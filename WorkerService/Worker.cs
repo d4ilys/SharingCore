@@ -1,0 +1,196 @@
+using SharingCore.Extensions;
+using SharingCore.MultiDatabase.Model;
+using SharingCore.MultiDatabase.Wrapper;
+using System;
+using Newtonsoft.Json;
+using SharingCore.Assemble.Model;
+using TSP.WokerServices.Base;
+using WorkerService.Model;
+
+namespace WorkerService
+{
+    public class Worker : BackgroundService
+    {
+        private readonly ILogger<Worker> _logger;
+
+        public Worker(ILogger<Worker> logger)
+        {
+            _logger = logger;
+        }
+
+        IFreeSql Logs = Dbs.Logs().GetFreeSql(); //不分库
+        IFreeSql Basics = Dbs.Basics().GetFreeSql(); //不分库
+        IFreeSql Business_2022 = Dbs.Business().GetFreeSql("2022"); //通过年定位库
+        IFreeSql Business_Now = Dbs.Business().GetNowFreeSql(); //直接获取当前年数据库
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+
+            for (int i = 0; i < 10000; i++)
+            {
+                await Task.Delay(10);
+                Parallel.For(0, 2, i =>
+                {
+                    MultidatabaseTransactionTest(i);
+                });
+            }
+            
+        }
+
+        public void InitTables()
+        {
+            Dbs.Basics().GetFreeSql().CodeFirst.SyncStructure<users>();
+            Dbs.Business().GetFreeSql("2022").CodeFirst.SyncStructure<order>();
+            Dbs.Business().GetNowFreeSql().CodeFirst.SyncStructure<order>();
+        }
+
+        public void SharingCoreNoQueryTest()
+        {
+            //只会往当前年库里插入
+            var executeAffrows = Business_Now.Insert(new order
+            {
+                commodity_name = "iwatch",
+                order_time = DateTime.Now,
+                buyer_name = "张三"
+            }).ExecuteAffrows();
+            Console.WriteLine(executeAffrows);
+
+            //通过日期范围进行插入 
+            SharingCores.NoQuery<order>(noQuery =>
+                {
+                    noQuery.Db.Insert(new order
+                    {
+                        commodity_name = "iwatch",
+                        order_time = DateTime.Now,
+                        buyer_name = "张三"
+                    })
+                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+                        .ExecuteAffrows();
+                },
+                param => param.Init(Dbs.Business(), DateTime.Parse("2023-02-03"),
+                    DateTime.Parse("2023-02-03")), //只会写入到2023年的库
+                                                   //事务补偿
+                (logId, dbWarp, exception) => { });
+
+            SharingCores.NoQuery<order>(noQuery =>
+                {
+                    noQuery.Db.Insert(new order
+                    {
+                        commodity_name = "iwatch",
+                        order_time = DateTime.Now,
+                        buyer_name = "张三"
+                    })
+                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+                        .ExecuteAffrows();
+                    var next = new Random().Next(2);
+                    if (next == 1)
+                    {
+                        throw new Exception();
+                    }
+                },
+                param => param.Init(Dbs.Business(), DateTime.Parse("2022-02-03"),
+                    DateTime.Parse("2023-02-03")), //2022和2023年库均写入
+               // 事务补偿
+                (logId, dbWarp, exception) =>
+                {
+                });
+        }
+
+        public void QueryPageListTest(int page)
+        {
+            var result = SharingCores.QueryPageList(query =>
+                {
+                    var result = query.Db.Select<order>().PageCore(query, out var count)
+                        .ToListCore(o => o, query, count);
+                    return new QueryFuncResult<order>(result, count);
+                },
+                param => param.Init(Dbs.Business(), 10, page, DateTime.Parse("2022-12-28"),
+                    DateTime.Parse("2023-01-04")),
+                out var total);
+
+            Console.WriteLine($"总条数:{total}，查询条数：{result.Count}");
+        }
+
+        public async Task QueryAllTest()
+        {
+            var list = await SharingCores.QueryAsync(query =>
+            {
+                var list = query.Db.Select<order>()
+                    .Where(o => o.order_time.Value.BetweenEnd(query.StartTime, query.EndTime)).ToList();
+                return list;
+            }, query => query.Init(Dbs.Business(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
+            Console.WriteLine(list.Count);
+        }
+
+
+        public async Task QueryToOneTest()
+        {
+            var list = await SharingCores.QueryToOneAsync(query =>
+            {
+                var list = query.Db.Select<order>()
+                    .Where(o => o.id == 199).ToList();
+                return list;
+            }, query => query.Init(Dbs.Business(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
+            Console.WriteLine(list.Count);
+        }
+
+
+        public void MultidatabaseTransactionTest(int i)
+        {
+            var businessWarp = Dbs.Business().GetNowDbWarp();
+            var basicsWarp = Dbs.Basics().GetDbWarp();
+            using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
+            {
+                tran.OnCommitFail += TransactionCompensation;
+                try
+                {
+                    tran.BeginTran();
+                    var r1 = tran.Orm1.Insert(new order
+                    {
+                        buyer_name = $"事务{i}",
+                        commodity_name = "事务",
+                        order_time = DateTime.Now
+                    }).ExecuteAffrows();
+
+                    var r2 = tran.Orm2.Insert<users>(new users()
+                    {
+                        name = $"事务{i}",
+                        password = "123",
+                        username = "1231"
+                    }).ExecuteAffrows();
+                    if (new Random().Next(5) == 1)
+                    {
+                        throw new Exception("");
+                    }
+
+                    var log = new multi_transaction_log()
+                    {
+                        content = $"{i}分布式事务测试...",
+                    };
+                    //提交事务并返回结果
+                    var result = tran.Commit(log);
+                    Console.WriteLine(result);
+                }
+                catch
+                {
+                    tran.Rellback();
+                }
+            }
+
+            //如果第一个库提交成功，其他库提交的过程中失败，那么将这里进行事务补偿
+            void TransactionCompensation(string logId, DbWarp dbWarp, Exception ex)
+            {
+                //日志中有记录SQL
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public void GetFreeSql()
+        {
+            Logs.Ado.Query<string>("select 1"); //不分库
+            Basics.Ado.Query<string>("select 1"); //不分库
+            Business_2022.Ado.Query<string>("select 1"); //通过年定位库
+            Business_Now.Ado.Query<string>("select 1"); //直接获取当前年数据库
+        }
+    }
+}
