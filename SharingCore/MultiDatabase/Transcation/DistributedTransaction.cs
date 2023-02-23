@@ -25,13 +25,13 @@ namespace SharingCore.MultiDatabase.Transcation
         private Dictionary<string, Object<DbConnection>> _connections = new Dictionary<string, Object<DbConnection>>();
 
         //用到的事务
-        public Dictionary<string, DbTransaction> Transactions = new Dictionary<string, DbTransaction>();
+        internal Dictionary<string, DbTransaction> Transactions = new Dictionary<string, DbTransaction>();
 
         //日志ID
         private long logId = 0;
 
         //监听错误提交事件
-        public event Action<string, DbWarp, Exception>? OnCommitFail = null;
+        internal event Action<string, DbWarp, Exception>? OnCommitFail = null;
 
         //构造方法
         public DistributedTransaction(IEnumerable<DbWarp> iFreeSqlCollect) => _iFreeSqlCollect = iFreeSqlCollect;

@@ -15,7 +15,7 @@ namespace SharingCore.MultiDatabase.Model
 
         public DateTime EndTime { get; set; }
 
-        public void Init(string _dbName,DateTime _starTime,DateTime _endTime,string _tenant)
+        public void Init(string _dbName,DateTime _starTime,DateTime _endTime,string _tenant = "")
         {
             DbName = _dbName;
             StartTime = _starTime;

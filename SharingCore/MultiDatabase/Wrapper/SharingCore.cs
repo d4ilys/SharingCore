@@ -24,13 +24,35 @@ namespace SharingCore.MultiDatabase.Wrapper
         /// </summary>
         /// <param name="param">Db包装类</param>
         /// <returns></returns>
-        public static DistributedTransaction Transaction(params DbWarp[] param)
+        public static DistributedTransaction Transaction(IEnumerable<DbWarp> dbWarps)
         {
             var local = new AsyncLocal<DistributedTransaction>();
-            local.Value = new DistributedTransaction(param.ToList());
+            local.Value = new DistributedTransaction(dbWarps);
+            return local.Value;
+        }
+        /// <summary>
+        /// 多库事务
+        /// </summary>
+        /// <param name="param">Db包装类</param>
+        /// <returns></returns>
+        public static MultiDatabaseTransaction2 Transaction(DbWarp dbWarp1, DbWarp dbWarp2)
+        {
+            var local = new AsyncLocal<MultiDatabaseTransaction2>();
+            local.Value = new MultiDatabaseTransaction2(dbWarp1, dbWarp2);
             return local.Value;
         }
 
+        /// <summary>
+        /// 多库事务
+        /// </summary>
+        /// <param name="param">Db包装类</param>
+        /// <returns></returns>
+        public static MultiDatabaseTransaction3 Transaction(DbWarp dbWarp1, DbWarp dbWarp2, DbWarp dbWarp3)
+        {
+            var local = new AsyncLocal<MultiDatabaseTransaction3>();
+            local.Value = new MultiDatabaseTransaction3(dbWarp1, dbWarp2, dbWarp3);
+            return local.Value;
+        }
         /// <summary>
         /// 跨库分页查询，包装方法
         /// </summary>

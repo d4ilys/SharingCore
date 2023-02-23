@@ -39,6 +39,9 @@ namespace SharingCore.Assemble
                 case "firebird":
                     dataType = DataType.Firebird;
                     break;
+                case "questdb":
+                    dataType = DataType.QuestDb;
+                    break;
             }
 
             return dataType;

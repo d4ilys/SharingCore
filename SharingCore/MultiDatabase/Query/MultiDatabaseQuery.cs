@@ -115,12 +115,13 @@ namespace SharingCore.MultiDatabase.Query
                         }
 
                         var collection = queryFuncResult.Result;
+                        size = Convert.ToInt64(queryFuncResult.Count);
+                        //计算多次查询的总页数
+                        count += size;
                         //判断第一个库是否还能查询到数据或者数据量否足够一页
                         if (collection.Count != 0 || taskList.Count < queryParam.PageSize)
                         {
-                            size = Convert.ToInt64(queryFuncResult.Count);
-                            //计算多次查询的总页数
-                            count += size;
+                          
                             if (size > 0)
                             {
                                 //计算一个库能分多少页，是否是最后一页
