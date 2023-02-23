@@ -2,7 +2,7 @@
 
 **前言**
 
-话说2021年开始了一个基于ASP.NET Core On Kubernetes 微服务的项目，谈到微服务 多库环境下 分布式事务、分库分表这些问题都是逃不开的，于是首先从ORM开始调研，由于我身为这个项目的*架构师(彩笔架构师)*  还是要考虑到一些重要的因素 **功能强大、支持多种数据库（并且行为一致，防止出现换库的情况）、支持分库分表** 等等，这时候第一时间就想到了 [FreeSql](https://github.com/dotnetcore/FreeSql)  ，FreeSql的架构设计非常好，每一种支持的数据库都有对应的Provider实现 做到行为一致，而且支持CodeFirst和DbFirst，分库分表FreeSql也有比较简单切有效的方案（本人在项目过程中也经常向FreeSql的作者叶老板学习请教，佩服叶老板的人品和技术）
+话说2021年开始了一个基于ASP.NET Core On Kubernetes 微服务的项目，谈到微服务 多库环境下 分布式事务、分库分表这些问题都是逃不开的，于是首先从ORM开始调研，由于我身为这个项目的*架构师  还是要考虑到一些重要的因素 **功能强大、支持多种数据库（并且行为一致，防止出现换库的情况）、支持分库分表** 等等，这时候第一时间就想到了 [FreeSql](https://github.com/dotnetcore/FreeSql)  ，FreeSql的架构设计非常好，每一种支持的数据库都有对应的Provider实现 做到行为一致，而且支持CodeFirst和DbFirst，分库分表FreeSql也有比较简单切有效的方案。
 
 **分布式事务**
 
@@ -10,61 +10,134 @@
 
 想要的效果：和单库事务一样，出现错误回滚 但是问题来了 多库呢？不同的数据库呢？
 
-请看下图
+* 在多库事务的开启时，每个库管理开启自己的事务
+* 在多库事务提交时，每个库的事务统一提交
+* 如果某一个库事务出现异常，这回滚全部数据库事务
+* 记录日志，第一个执行Common的数据库称之为主库，会自动创建一个日志表，用于记录多库事务的信息、执行的SQL、业务模块 用于人工介入或者事务补偿
+* 如果第一个库发生Common后，其他库可能由于网络原因、数据库宕机 无法Common事务，导致数据不一致，这时候要进行事务补偿或者人工介入
 
 ![image](https://user-images.githubusercontent.com/54463101/208339387-8a7cabf4-1afa-43a1-ac62-9f08f89c83fd.png)
 
 **跨库查询 跨库分页查询**
 
-这一块也实现了，但是掉了太多的**头发**。。详情请看代码。。
-
-**注意：此项目是在现有项目中提取出来的 然后做了一部分简化与修改，未经历过项目的洗礼可能存在BUG，请勿在生产环境中使用，如果感兴趣请联系我 QQ 963922242**
+通过时间分片定位、事件委托、分页算法实现跨库分页查询
 
 #### 1.appsettings.json中添加一下配置 
 
 ~~~json
   "ShowSqlLog": true,   //是否显示SQL日志
-  "SharingCoreDbConfig": [			//数据库配置信息
+  //数据库配置信息
+  "CustomDbConfig": [
     {
-      "Key": "Bussiness_dev",
-      "Identification": "Bussiness_dev",
+      "Key": "sharingcore_basics", //数据库名即可
+      "Identification": "sharingcore_basics",
       "DataType": "MySql",
-      "ConnectString": "Data Source=Host;Port=Port;User ID=root;Password=xxxxx;Initial Catalog=xxxx;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;",
+      "ConnectString": "Data Source=host;Port=Port;User ID=root;Password=123;Initial Catalog=sharingcore_basics;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;",
       "Slaves": [
-
       ]
     },
-    //轨迹表，分库分表
+    //业务库2022、分库
     {
-      "Key": "Trajectory_2022",
-      "Identification": "Trajectory",
+      "Key": "sharingcore_business_2022",
+      "Identification": "sharingcore_business", //除去日期的标识
       "DataType": "MySql",
-      "ConnectString": "Data Source=Host;Port=Port;User ID=root;Password=xxxxx;Initial Catalog=xxxx;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;",
-       "Slaves": [
-
+      "ConnectString": "Data Source=host;Port=Port;User ID=root;Password=123;Initial Catalog=sharingcore_business_2022;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;",
+      "Slaves": [
+      ]
+    },
+    //业务库2023、分库
+    {
+      "Key": "sharingcore_business_2023",
+      "Identification": "sharingcore_business",
+      "DataType": "MySql",
+      "ConnectString": "Data Source=host;Port=Port;User ID=root;Password=123;Initial Catalog=sharingcore_business_2022;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;",
+      "Slaves": [
+      ]
+    },
+    //日志时序数据库 不分库
+    {
+      "Key": "sharingcore_log",
+      "Identification": "sharingcore_log",
+      "DataType": "MySql",
+      "ConnectString": "host=host;port=8812;username=admin;password=quest;database=qdb;ServerCompatibilityMode=NoTypeLoading;",
+      "Slaves": [
       ]
     }
+
   ]
 ~~~
 
 #### 2.初始化数据库
 
+> 创建SharingCoreDbs扩展方法
+
+~~~C#
+ public static class SharingCoreDbsExtension
+ {
+     /// <summary>
+     /// 基础库
+     /// </summary>
+     /// <param name="dbs"></param>
+     /// <returns></returns>
+     public static string Basics(this SharingCoreDbs dbs) => "sharingcore_basics";
+
+     /// <summary>
+     /// 主业务库
+     /// </summary>
+     /// <param name="dbs"></param>
+     /// <returns></returns>
+     public static string Business(this SharingCoreDbs dbs) => "sharingcore_business";
+
+     /// <summary>
+     /// 主业务库
+     /// </summary>
+     /// <param name="dbs"></param>
+     /// <returns></returns>
+     public static string Logs(this SharingCoreDbs dbs) => "sharingcore_log";
+
+ }
+~~~
+
+> 可以创建GlobalUsings.cs更方面
+
+~~~c#
+global using static SharingCore.MultiDatabase.Wrapper.SharingCores;
+global using SharingCore;
+~~~
+
 > ASP.NET Core 6.0/7.0 Program.cs中
 
 ~~~c#
 var builder = WebApplication.CreateBuilder(args).InjectSharingCore(); //注入
-//不加全局过滤器
-builder.Services.AddSharingCore();
+//简单方式
+services.AddSharingCore(options =>
+{
+   options.DBConfigKey = "CustomDbConfig";  //指定配置文件中的KEY，如不指定 默认为 SharingCoreDbConfig
+});
 //全局过滤器
 builder.Services.AddSharingCore<FreeSqlFilter>(f => f.isDelete == 0);
-//指定过滤器
-builder.Services.AddSharingCore(new Dictionary<string, Expression<Func<TSPFreeSqlFilter, bool>>>()
+//复杂构建
+builder.Services.AddSharingCore(new Dictionary<string, Expression<Func<FreeSqlFilter, bool>>>() //定制不同库的过滤器
 {
-	{ DbEnum.Basics, f => f.isDel == 0 }, //此库指定过滤器
-	{ DbEnum.Common, f => false }, //此库不指定过滤器
-	{ FreeSqlFilterType.Communal, f => f.isDelete == 0 } //其他库公用的过滤器
+    { Dbs.Basics(), f => f.isDelete == 0 }, //基础库全局过滤器
+    { Dbs.Logs(), f => false }, //此库不指定过滤器
+    { FreeSqlFilterType.Communal, f => f.isDelete == 0 } //其他库公用的过滤器
+}, options =>
+{
+    options.DBConfigKey = "CustomDbConfig"; //指定配置文件中的KEY，如不指定 默认为 SharingCoreDbConfig
+    options.DemandLoading = true; //按需加载
+    //FreeSqlBuilder时候每个库可以扩展
+    options.FreeSqlBuildersInject = new Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>()
+    {
+        {
+            Dbs.Logs(), //日志库QuestDb在FreeSqlBuilder需要制定RestAPI配置
+            builder => builder.UseQuestDbRestAPI("192.168.0.36:9001", "admin", "ushahL(aer2r")
+        }
+    };
 });
 ~~~
+
+* **按需加载：通过SharingCoreDbs设置的扩展方法，来控制加载数据库**
 
 > ASP.NET Core 3.1/5.0 Program.cs中
 
@@ -74,108 +147,104 @@ builder.Services.AddSharingCore(new Dictionary<string, Expression<Func<TSPFreeSq
      .InjectSharingCore()  //注入
 ~~~
 
-> ASP.NET Core 3.1/5.0 Startup.cs中
+#### 3.获取IFreeSql操作对象
 
 ~~~c#
-//ConfigureServices方法中
-//不加全局过滤器
-services.AddSharingCore();
-//全局过滤器
-services.AddSharingCore<FreeSqlFilter>(f => f.isDelete == 0);
-~~~
-
-#### 3.创建一个数据库枚举类
-
-~~~C#
-//所有数据库，对应的是appsettings.json中的
-public class DBAll
-{
-    public static string Bussiness
-    {
-        get { return "Bussiness"; }
-    }
-
-    public static string Trajectory
-    {
-        get
-        {
-            return "Trajectory";
-        }
-    }
-}
-~~~
-
-#### 4.获取IFreeSql操作对象
-
-~~~c#
-//普通，不分库
-var BussinessDb = DBAll.Bussiness.NormalFreeSql(); 
-//分库
-var TrajectoryDb = DBAll.Trajectory.SharingFreeSql();
+//不分库
+var Logs = Dbs.Logs().GetFreeSql().Ado.Query<string>("select 1"); 
+//不分库
+var Basics = Dbs.Basics().GetFreeSql().Ado.Query<string>("select 1");
+//通过年定位库
+var Business_2022 = Dbs.Business().GetFreeSql("2022").Ado.Query<string>("select 1"); 
+//直接获取当前年数据库
+var Business_2023 = Dbs.Business().GetNowFreeSql().Ado.Query<string>("select 1"); 
 ~~~
 
 #### 5.跨库分页查询
 
 ~~~C#
-//直接调用静态方法
-var list = SharingCore.QueryPageList(func =>
+var result = SharingCores.QueryPageList(query =>
 {
-    var result = func.Db.Select<vehicleLudan, vehicleLudanFreight>()
-        .Where((l, f) => l.dateLudan.Value.BetweenEnd(func.StartTime, func.EndTime))
-        .LeftJoin((l, f) => l.vehicleLudanId == f.vehicleLudanId)
-        .PageCore(pageSize, func, out var count) //自定义分页扩展方法
-        .ToListCore((l, f) => new dto() //自定义ToList扩展方法
-                    {
-                        vehicleLudanId = l.vehicleLudanId,
-                        departName = f.dayPrice,
-                        dateLudan = l.dateLudan
-                    }, func, count);
-    return new QueryFuncResult<dto>(result, count);
-}, query => query.Init(DBAll.Business, pageSize, currPage, start, end), out var total);
+    var result = query.Db.Select<order>().PageCore(query, out var count)
+     			.ToListCore(o => o, query, count);
+                    return new QueryFuncResult<order>(result, count);
+},param => param.Init(Dbs.Business(), 10, page, DateTime.Parse("2022-12-28"),DateTime.Parse("2023-01-04")),out var total);
+Console.WriteLine($"总条数:{total}，查询条数：{result.Count}");
 ~~~
 
 #### 6. 跨库增删改
 
 ~~~C#
-var list = new List<string>() { "6202334ae20883e02a66e86e", "61cd0407191e4343c2689a60" };
-var result = SharingCore.NoQuery<jsd>(func =>
+//只会往当前年库里插入
+var executeAffrows = Business_Now.Insert(new order
 {
-    
-    func.Db.Update<jsd>()
-        .WithTransaction(func.Transaction)  //千万不要忘记WithTransaction....
-        .Set(j => j.htId == "修改了")
-        .Where(j => list.Contains(j.jsdId))
-        .ExecuteAffrows();
-}, param => param.Init(DBAll.Business, starTime, endTime), //参数
-(s, warp, ex) => //事务补偿
-{
-	Console.WriteLine("这里要进行事务补偿");
-});
-return result;
+    commodity_name = "iwatch",
+    order_time = DateTime.Now,
+    buyer_name = "张三"
+}).ExecuteAffrows();
+Console.WriteLine(executeAffrows);
+
+//通过日期范围进行插入 
+SharingCores.NoQuery<order>(noQuery =>
+    {
+        noQuery.Db.Insert(new order
+            {
+                commodity_name = "iwatch",
+                order_time = DateTime.Now,
+                buyer_name = "张三"
+            })
+            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+            .ExecuteAffrows();
+    },
+    param => param.Init(Dbs.Business(), DateTime.Parse("2023-02-03"),
+        DateTime.Parse("2023-02-03")), //只会写入到2023年的库
+    //事务补偿
+    (logId, dbWarp, exception) => { });
+
+SharingCores.NoQuery<order>(noQuery =>
+    {
+        noQuery.Db.Insert(new order
+            {
+                commodity_name = "iwatch",
+                order_time = DateTime.Now,
+                buyer_name = "张三"
+            })
+            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+            .ExecuteAffrows();
+        var next = new Random().Next(2);
+        if (next == 1)
+        {
+            throw new Exception();
+        }
+    },
+    param => param.Init(Dbs.Business(), DateTime.Parse("2022-02-03"),
+        DateTime.Parse("2023-02-03")), //2022和2023年库均写入
+    // 事务补偿
+    (logId, dbWarp, exception) => { })
 ~~~
 
 #### 7.跨库并行查询（不分页）
 
 ~~~C#
-var list = await SharingCore.QueryAsync(func =>
+var list = await SharingCores.QueryAsync(query =>
 {
-    var list = func.Db.Select<vehicleLudan>()
-        .Where(l => l.dateLudan.Value.BetweenEnd(func.StartTime, func.EndTime)).ToList();
-    return list;
-}, query => query.Init(DBAll.Business, start, end));
+      var list = query.Db.Select<order>()
+      .Where(o => o.order_time.Value.BetweenEnd(query.StartTime, query.EndTime)).ToList();
+       return list;
+}, query => query.Init(Dbs.Business(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
+Console.WriteLine(list.Count);
 ~~~
 
 #### 8.跨库ToOne查询
 
 ~~~C# 
-var list = await SharingCore.QueryToOneAsync(func =>
+var list = await SharingCores.QueryToOneAsync(query =>
 {
-    var list = func.Db.Select<vehicleLudan>()
-        .Where(l => l.dateLudan.Value.BetweenEnd(func.StartTime, func.EndTime))
-        .Where(l => l.id = "1")
-        .ToList();
-    return list;
-}, query => query.Init(DBAll.Business, start, end));
+      var list = query.Db.Select<order>()
+      .Where(o => o.id == 199).ToList();
+      return list;
+}, query => query.Init(Dbs.Business(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
+Console.WriteLine(list.Count);
 ~~~
 
 #### 9.跨库Any查询
@@ -194,79 +263,50 @@ var list = await SharingCore.QueryAnyAsync(func =>
 #### 10.分布式事务、多库事务
 
 ~~~C#
-public static async Task Test(int param)
+var businessWarp = Dbs.Business().GetNowDbWarp();
+var basicsWarp = Dbs.Basics().GetDbWarp();
+using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
 {
-    var result = new List<TransactionsResult>();
-    long logId = 0;
-    //开始执行事务
-    using (var tran = SharingCore.Transaction(DBAll.Business.NormalDbWarp(), DBAll.Basics.SharingDbWarp())) //集合的第一个记录事务执行日期
+    tran.OnCommitFail += TransactionCompensation;
+    try
     {
-        //绑定事件，用于事务补偿
-        tran.OnCommitFail += TransactionCompensation;
-        try
+        tran.BeginTran();
+        var r1 = tran.Orm1.Insert(new order
+                                  {
+                                      buyer_name = $"事务{i}",
+                                      commodity_name = "事务",
+                                      order_time = DateTime.Now
+                                  }).ExecuteAffrows();
+
+        var r2 = tran.Orm2.Insert<users>(new users()
+                                         {
+                                             name = $"事务{i}",
+                                             password = "123",
+                                             username = "1231"
+                                         }).ExecuteAffrows();
+        if (new Random().Next(5) == 1)
         {
-            //开始事务
-            tran.BeginTran();
-
-            //第一个库添加
-            var logistic = new logistics()
-            {
-                logisticsName = param.ToString()
-            };
-            //千万不要忘了WithTransaction
-            DBAll.Business.NormalFreeSql().Instance.Insert(logistic).WithTransaction(tran.Transactions[db1.Name]).ExecuteAffrows();
-
-            //第二个库添加
-            var order = new order()
-            {
-                orderName = param.ToString()
-            };
-            //千万不要忘了WithTransaction
-            DBAll.Basics.NormalFreeSql().Instance.Insert(order).WithTransaction(tran.Transactions[db2.Name]).ExecuteAffrows();
-
-            //向主库添加日志，这个是有事务的
-            var log = new multi_transaction_log()
-            {
-                content = $"分布式事务测试...",
-            };
-            //提交事务并返回结果
-            result = tran.Commit(log);
+            throw new Exception("");
         }
-        catch (Exception e)
+
+        var log = new multi_transaction_log()
         {
-	    //如果多个库在执行SQL时出现异常，将全部回滚
-            tran.Rellback();
-        }
+            content = $"{i}分布式事务测试...",
+        };
+        //提交事务并返回结果
+        var result = tran.Commit(log);
+        Console.WriteLine(result);
     }
-    result.ForEach(t => { Console.WriteLine($"数据库：{t.Key}，执行结果：{t.Successful}"); });
+    catch
+    {
+        tran.Rellback();
+    }
 }
 
 //如果第一个库提交成功，其他库提交的过程中失败，那么将这里进行事务补偿
-public static void TransactionCompensation(string logId, DbWarp dbWarp, Exception ex)
+void TransactionCompensation(string logId, DbWarp dbWarp, Exception ex)
 {
-    var id = Convert.ToInt64(logId);
-    var log = dbWarp.Instance.Select<multi_transaction_log>().Where(b => b.id == id).ToOne();
-    //确认是失败的
-    var log_result = JsonConvert.DeserializeObject<List<TransactionsResult>>(log.result_msg);
-    foreach (var transactionsResult in log_result)
-    {
-        if (transactionsResult.Successful == false)
-        {
-            var failDb = transactionsResult.Key;
-            var tempDb = ib.Get(transactionsResult.Key);
-            var sqls = log.exec_sql;
-            var sqlsDic = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(sqls);
-            var sqlsList = sqlsDic[failDb];
-            tempDb.Transaction(() =>
-            {
-                foreach (var noQuerySql in sqlsList)
-                {
-                    tempDb.Ado.ExecuteNonQuery(noQuerySql);
-                }
-            });
-            dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id == id).ExecuteAffrows();
-            Console.WriteLine("事务补偿成功...");
-        }
-    }
+    //日志中有记录SQL
+    Console.WriteLine(ex.Message);
 }
 ~~~
