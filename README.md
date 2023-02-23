@@ -137,7 +137,7 @@ builder.Services.AddSharingCore(new Dictionary<string, Expression<Func<FreeSqlFi
 });
 ~~~
 
-* **按需加载：通过SharingCoreDbs设置的扩展方法，来控制加载数据库**
+* **按需加载：例如 配置文件中有30个数据库但是不同的工作服务中会用到不同的数据库 并不想全都加载，这时候可以每一个服务自定义SharingCoreDbs扩展方法 来控制加载数据库，SharingCore会根据扩展方法进行加载数据库**
 
 > ASP.NET Core 3.1/5.0 Program.cs中
 
