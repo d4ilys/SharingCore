@@ -303,10 +303,45 @@ using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
     }
 }
 
-//如果第一个库提交成功，其他库提交的过程中失败，那么将这里进行事务补偿
+   //如果第一个库提交成功，其他库提交的过程中失败，那么将这里进行事务补偿
 void TransactionCompensation(string logId, DbWarp dbWarp, Exception ex)
 {
     //日志中有记录SQL
-    Console.WriteLine(ex.Message);
+    var id = Convert.ToInt64(logId);
+    //这里的DBWarp是日志存储所在的数据库
+    var log = dbWarp.Instance.Select<multi_transaction_log>().Where(b => b.id ==
+                                                                    id).ToOne();
+    //拿到多库事务执行的信息
+    var log_result = JsonConvert.DeserializeObject<List<TransactionsResult>>
+        (log.result_msg);
+    foreach (var transactionsResult in log_result)
+    {
+        //拿到失败Common失败的数据库
+        if (transactionsResult.Successful == false)
+        {
+            //失败数据库的KEY
+            var failDb = transactionsResult.Key;
+            //获取数据库操作对象准备执行事务补偿
+            var tempDb = failDb.GetFreeSql();
+            //拿到在分布式事务中这个库所Common失败的SQL
+            var sqls = log.exec_sql;
+            var sqlsDic = JsonConvert.DeserializeObject<Dictionary<string,
+            List<string>>>(sqls);
+            var sqlsList = sqlsDic[failDb];
+            //事务补偿，执行在Common时没有成功的SQL
+            tempDb.Transaction(() => {
+                foreach (var noQuerySql in sqlsList)
+                {
+                    tempDb.Ado.ExecuteNonQuery(noQuerySql);
+                }
+
+                if (dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id == id).ExecuteAffrows() == 0)
+                {
+                    throw new Exception("如果删除日志失败，回滚SQL..");
+                }
+            });
+            Console.WriteLine("事务补偿成功...");
+        }
+    }
 }
 ~~~
