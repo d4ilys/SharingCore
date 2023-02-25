@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharingCore", "SharingCore\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerService", "WorkerService\WorkerService.csproj", "{9EF5F692-BC72-418F-9D89-0509A4B0C9FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{80E708C2-C1C1-4E66-BDC1-9B7DDD3C9A5B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9EF5F692-BC72-418F-9D89-0509A4B0C9FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9EF5F692-BC72-418F-9D89-0509A4B0C9FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9EF5F692-BC72-418F-9D89-0509A4B0C9FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80E708C2-C1C1-4E66-BDC1-9B7DDD3C9A5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80E708C2-C1C1-4E66-BDC1-9B7DDD3C9A5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80E708C2-C1C1-4E66-BDC1-9B7DDD3C9A5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80E708C2-C1C1-4E66-BDC1-9B7DDD3C9A5B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

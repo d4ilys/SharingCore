@@ -146,7 +146,15 @@ namespace SharingCore.MultiDatabase.Transcation
                     // 这里从第二个开始提交
                     try
                     {
+                        //Test 
+                        //if (new Random().Next(2) == 1)
+                        //{
+                        //    Console.WriteLine($"{kv.Key}，由于网络宕机出现错误 请进行事务补偿.");
+                        //    throw new Exception($"{kv.Key}，由于网络宕机出现错误 请进行事务补偿.");
+                        //}
+
                         kv.Value.Commit();
+
                         //Commit没有异常说明已经执行完成
                         resultDictionary.Add(new TransactionsResult()
                         {
@@ -205,6 +213,7 @@ namespace SharingCore.MultiDatabase.Transcation
                     continue;
                 }
             }
+
             CurdAfterLog.CurrentLog.Value = string.Empty;
         }
 
@@ -228,6 +237,7 @@ namespace SharingCore.MultiDatabase.Transcation
                         continue;
                     }
                 }
+
                 CurdAfterLog.CurrentLog.Value = string.Empty;
                 _connections = null;
                 Transactions = null;

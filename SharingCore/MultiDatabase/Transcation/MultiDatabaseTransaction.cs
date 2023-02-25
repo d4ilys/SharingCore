@@ -23,7 +23,10 @@ namespace SharingCore.MultiDatabase.Transcation
             _dbWarp1 = dbWarp1;
             _dbWarp2 = dbWarp2;
             _internel = new DistributedTransaction(new DbWarp[] { dbWarp1, dbWarp2 });
-            _internel.OnCommitFail += OnCommitFail;
+            _internel.OnCommitFail += (s, warp, ex) =>
+            {
+                OnCommitFail?.Invoke(s,warp,ex);
+            };
         }
 
         public void BeginTran()

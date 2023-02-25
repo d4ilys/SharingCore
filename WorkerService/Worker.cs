@@ -25,16 +25,11 @@ namespace WorkerService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
-            for (int i = 0; i < 10000; i++)
+            while (true)
             {
-                await Task.Delay(10);
-                Parallel.For(0, 2, i =>
-                {
-                    MultidatabaseTransactionTest(i);
-                });
+                Console.ReadKey();  
+                MultidatabaseTransactionTest(1);
             }
-            
         }
 
         public void InitTables()
@@ -46,7 +41,7 @@ namespace WorkerService
 
         public void SharingCoreNoQueryTest()
         {
-            //只会往当前年库里插入
+//只会往当前年库里插入
             var executeAffrows = Business_Now.Insert(new order
             {
                 commodity_name = "iwatch",
@@ -55,31 +50,31 @@ namespace WorkerService
             }).ExecuteAffrows();
             Console.WriteLine(executeAffrows);
 
-            //通过日期范围进行插入 
+//通过日期范围进行插入 
             SharingCores.NoQuery<order>(noQuery =>
                 {
                     noQuery.Db.Insert(new order
-                    {
-                        commodity_name = "iwatch",
-                        order_time = DateTime.Now,
-                        buyer_name = "张三"
-                    })
+                        {
+                            commodity_name = "iwatch",
+                            order_time = DateTime.Now,
+                            buyer_name = "张三"
+                        })
                         .WithTransaction(noQuery.Transaction) //可以保证跨库事务
                         .ExecuteAffrows();
                 },
                 param => param.Init(Dbs.Business(), DateTime.Parse("2023-02-03"),
                     DateTime.Parse("2023-02-03")), //只会写入到2023年的库
-                                                   //事务补偿
+                //事务补偿
                 (logId, dbWarp, exception) => { });
 
             SharingCores.NoQuery<order>(noQuery =>
                 {
                     noQuery.Db.Insert(new order
-                    {
-                        commodity_name = "iwatch",
-                        order_time = DateTime.Now,
-                        buyer_name = "张三"
-                    })
+                        {
+                            commodity_name = "iwatch",
+                            order_time = DateTime.Now,
+                            buyer_name = "张三"
+                        })
                         .WithTransaction(noQuery.Transaction) //可以保证跨库事务
                         .ExecuteAffrows();
                     var next = new Random().Next(2);
@@ -90,10 +85,8 @@ namespace WorkerService
                 },
                 param => param.Init(Dbs.Business(), DateTime.Parse("2022-02-03"),
                     DateTime.Parse("2023-02-03")), //2022和2023年库均写入
-               // 事务补偿
-                (logId, dbWarp, exception) =>
-                {
-                });
+                // 事务补偿
+                (logId, dbWarp, exception) => { });
         }
 
         public void QueryPageListTest(int page)
@@ -158,18 +151,15 @@ namespace WorkerService
                         password = "123",
                         username = "1231"
                     }).ExecuteAffrows();
-                    if (new Random().Next(5) == 1)
-                    {
-                        throw new Exception("");
-                    }
+
 
                     var log = new multi_transaction_log()
                     {
                         content = $"{i}分布式事务测试...",
                     };
+
                     //提交事务并返回结果
                     var result = tran.Commit(log);
-                    Console.WriteLine(result);
                 }
                 catch
                 {
@@ -181,7 +171,40 @@ namespace WorkerService
             void TransactionCompensation(string logId, DbWarp dbWarp, Exception ex)
             {
                 //日志中有记录SQL
-                Console.WriteLine(ex.Message);
+                var id = Convert.ToInt64(logId);
+                //这里的DBWarp是日志存储所在的数据库
+                var log = dbWarp.Instance.Select<multi_transaction_log>().Where(b => b.id ==
+                    id).ToOne();
+                //拿到多库事务执行的信息
+                var log_result = JsonConvert.DeserializeObject<List<TransactionsResult>>
+                    (log.result_msg);
+                foreach (var transactionsResult in log_result)
+                {
+                    //拿到失败Common失败的数据库
+                    if (transactionsResult.Successful == false)
+                    {
+                        //失败数据库的KEY
+                        var failDb = transactionsResult.Key;
+                        //获取数据库操作对象准备执行事务补偿
+                        var tempDb = failDb.GetFreeSql();
+                        //拿到在分布式事务中这个库所Common失败的SQL
+                        var sqls = log.exec_sql;
+                        var sqlsDic = JsonConvert.DeserializeObject<Dictionary<string,
+                            List<string>>>(sqls);
+                        var sqlsList = sqlsDic[failDb];
+                        //事务补偿
+                        tempDb.Transaction(() =>
+                        {
+                            foreach (var noQuerySql in sqlsList)
+                            {
+                                tempDb.Ado.ExecuteNonQuery(noQuerySql);
+                            }
+                        });
+                        dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id ==
+                            id).ExecuteAffrows();
+                        Console.WriteLine("事务补偿成功...");
+                    }
+                }
             }
         }
 
