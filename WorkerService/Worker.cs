@@ -199,9 +199,12 @@ namespace WorkerService
                             {
                                 tempDb.Ado.ExecuteNonQuery(noQuerySql);
                             }
+
+                            if (dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id == id).ExecuteAffrows() == 0)
+                            {
+                                throw new Exception("如果删除日志失败，回滚SQL..");
+                            }
                         });
-                        dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id ==
-                            id).ExecuteAffrows();
                         Console.WriteLine("事务补偿成功...");
                     }
                 }
