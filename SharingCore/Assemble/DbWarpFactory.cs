@@ -1,4 +1,5 @@
-﻿using SharingCore.Assemble.Model;
+﻿using System;
+using SharingCore.Assemble.Model;
 using System.Threading;
 
 namespace SharingCore.Assemble
@@ -64,8 +65,7 @@ namespace SharingCore.Assemble
 
         private static IFreeSql GetInstance(string key)
         {
-            var db = IdleBusProvider.Instance?.Get(key);
-            return db;
+            return IdleBusProvider.Instance?.Get(key);
         }
     }
 }

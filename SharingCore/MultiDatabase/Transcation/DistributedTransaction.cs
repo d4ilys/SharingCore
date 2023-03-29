@@ -146,7 +146,7 @@ namespace SharingCore.MultiDatabase.Transcation
                     // 这里从第二个开始提交
                     try
                     {
-                        //Test 
+                        //TODO Test 
                         //if (new Random().Next(2) == 1)
                         //{
                         //    Console.WriteLine($"{kv.Key}，由于网络宕机出现错误 请进行事务补偿.");

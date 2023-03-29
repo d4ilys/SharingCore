@@ -121,7 +121,6 @@ namespace SharingCore.MultiDatabase.Query
                         //判断第一个库是否还能查询到数据或者数据量否足够一页
                         if (collection.Count != 0 || taskList.Count < queryParam.PageSize)
                         {
-                          
                             if (size > 0)
                             {
                                 //计算一个库能分多少页，是否是最后一页
@@ -175,6 +174,7 @@ namespace SharingCore.MultiDatabase.Query
                                         {
                                             var dts = collection.Take(sikp);
                                             taskList.AddRange(dts);
+
                                             isSikp = true;
                                         }
                                     }

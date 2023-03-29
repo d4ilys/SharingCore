@@ -15,6 +15,7 @@ namespace WorkerService
                 .InjectSharingCore()
                 .ConfigureServices(services =>
                 {
+                    services.AddHttpContextAccessor();
                     services.AddHostedService<Worker>();
                     //复杂构建
                     services.AddSharingCore(new Dictionary<string, Expression<Func<FreeSqlFilter, bool>>>() //定制不同库的过滤器

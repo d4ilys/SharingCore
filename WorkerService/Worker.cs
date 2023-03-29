@@ -19,24 +19,32 @@ namespace WorkerService
         }
 
         IFreeSql Logs = Dbs.Logs().GetFreeSql(); //不分库
-        IFreeSql Basics = Dbs.Basics().GetFreeSql(); //不分库
-        IFreeSql Business_2022 = Dbs.Business().GetFreeSql("2022"); //通过年定位库
-        IFreeSql Business_Now = Dbs.Business().GetNowFreeSql(); //直接获取当前年数据库
+        IFreeSql Basics; //不分库
+        IFreeSql Business_2022; //通过年定位库
+        IFreeSql Business_Now; //直接获取当前年数据库
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (true)
+
+            try
             {
-                Console.ReadKey();  
-                MultidatabaseTransactionTest(1);
+                InitTables();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
         }
 
         public void InitTables()
         {
-            Dbs.Basics().GetFreeSql().CodeFirst.SyncStructure<users>();
-            Dbs.Business().GetFreeSql("2022").CodeFirst.SyncStructure<order>();
-            Dbs.Business().GetNowFreeSql().CodeFirst.SyncStructure<order>();
+            Basics = Dbs.Basics().GetFreeSql();
+            Business_2022 = Dbs.Business().GetFreeSql("2022");
+            Business_Now = Dbs.Business().GetNowFreeSql();
+            Basics.CodeFirst.SyncStructure<users>();
+            Business_2022.CodeFirst.SyncStructure<order>();
+            Business_Now.CodeFirst.SyncStructure<order>();
         }
 
         public void SharingCoreNoQueryTest()
@@ -93,7 +101,8 @@ namespace WorkerService
         {
             var result = SharingCores.QueryPageList(query =>
                 {
-                    var result = query.Db.Select<order>().PageCore(query, out var count)
+                    var result = query.Db.Select<order>()
+                        .PageCore(query, out var count)
                         .ToListCore(o => o, query, count);
                     return new QueryFuncResult<order>(result, count);
                 },
@@ -144,7 +153,7 @@ namespace WorkerService
                         commodity_name = "事务",
                         order_time = DateTime.Now
                     }).ExecuteAffrows();
-
+                   
                     var r2 = tran.Orm2.Insert<users>(new users()
                     {
                         name = $"事务{i}",
@@ -157,7 +166,6 @@ namespace WorkerService
                     {
                         content = $"{i}分布式事务测试...",
                     };
-
                     //提交事务并返回结果
                     var result = tran.Commit(log);
                 }
@@ -180,6 +188,7 @@ namespace WorkerService
                     (log.result_msg);
                 foreach (var transactionsResult in log_result)
                 {
+                    //
                     //拿到失败Common失败的数据库
                     if (transactionsResult.Successful == false)
                     {
