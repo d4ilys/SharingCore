@@ -27,6 +27,7 @@ namespace WorkerService
                     {
                         options.DBConfigKey = "CustomDbConfig"; //指定配置文件中的KEY，如不指定 默认为 SharingCoreDbConfig
                         options.DemandLoading = true; //按需加载
+                        options.IdleTimeout = TimeSpan.FromSeconds(20);
                         //FreeSqlBuilder时候每个库可以扩展
                         options.FreeSqlBuildersInject = new Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>()
                         {

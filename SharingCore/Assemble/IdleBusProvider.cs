@@ -145,7 +145,7 @@ namespace SharingCore.Assemble
                 {
                     lock (LockObject)
                     {
-                        Instance ??= new IdleBus<IFreeSql>(TimeSpan.MaxValue);
+                        Instance ??= new IdleBus<IFreeSql>(options.IdleTimeout);
                         SharingCoreUtils.InitMehtodCache();
                     }
                 }
@@ -157,12 +157,12 @@ namespace SharingCore.Assemble
                     : options?.DBConfigKey;
 
 
-                var dbConfigs = configuration.GetSection(configName)?.Get<List<DbConfig>>();
+                var dbConfigs = configuration.GetSection(configName)?.Get<List<DatabaseInfo>>();
 
                 if (dbConfigs == null)
                 {
                     var sharingCoreDbConfigString = configuration[configName] ?? "";
-                    dbConfigs = JsonConvert.DeserializeObject<List<DbConfig>>(sharingCoreDbConfigString);
+                    dbConfigs = JsonConvert.DeserializeObject<List<DatabaseInfo>>(sharingCoreDbConfigString);
                     if (dbConfigs == null || !dbConfigs.Any())
                     {
                         throw new Exception(@"请在配置文件中配置数据库连接信息：
@@ -187,7 +187,7 @@ namespace SharingCore.Assemble
 
                 if (options?.CustomDbConfigs != null)
                 {
-                    dbConfigs ??= new List<DbConfig>();
+                    dbConfigs ??= new List<DatabaseInfo>();
                     dbConfigs.AddRange(options?.CustomDbConfigs);
                 }
 
@@ -210,9 +210,7 @@ namespace SharingCore.Assemble
                     {
                         //如果扩展方法中没有这个数据库则跳出循环
                         if (!SharingCoreUtils.TryIsLoad(item.Key))
-                        {
                             continue;
-                        }
                     }
 
                     Instance.Register(item.Key, () =>

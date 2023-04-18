@@ -2,6 +2,7 @@ using SharingCore.Extensions;
 using SharingCore.MultiDatabase.Model;
 using SharingCore.MultiDatabase.Wrapper;
 using System;
+using FreeSharding.SeparateDatabase;
 using Newtonsoft.Json;
 using SharingCore.Assemble.Model;
 using TSP.WokerServices.Base;
@@ -25,16 +26,7 @@ namespace WorkerService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
-            try
-            {
-                InitTables();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            
         }
 
         public void InitTables()
@@ -153,7 +145,7 @@ namespace WorkerService
                         commodity_name = "事务",
                         order_time = DateTime.Now
                     }).ExecuteAffrows();
-                   
+
                     var r2 = tran.Orm2.Insert<users>(new users()
                     {
                         name = $"事务{i}",
@@ -209,7 +201,8 @@ namespace WorkerService
                                 tempDb.Ado.ExecuteNonQuery(noQuerySql);
                             }
 
-                            if (dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id == id).ExecuteAffrows() == 0)
+                            if (dbWarp.Instance.Delete<multi_transaction_log>().Where(m => m.id == id)
+                                    .ExecuteAffrows() == 0)
                             {
                                 throw new Exception("如果删除日志失败，回滚SQL..");
                             }

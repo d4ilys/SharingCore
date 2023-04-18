@@ -13,14 +13,14 @@ namespace SharingCore.Common
     /// </summary>
     public partial class SharingCoreUtils
     {
-        private static HashSet<string> methodInfos_cache = new HashSet<string>();
+        private static HashSet<DbInfoByAttribute> dbInfosCache = new HashSet<DbInfoByAttribute>();
 
         internal static void InitMehtodCache()
         {
             var type = typeof(SharingCoreDbs);
             var entryAssembly = Assembly.GetEntryAssembly();
             var assmblys = new List<Assembly>() { entryAssembly };
-            var baseAssmbly = SharingCoreUtils.Options?.BaseReferenceAssembly;
+            var baseAssmbly = Options?.BaseReferenceAssembly;
             if (baseAssmbly != null)
             {
                 assmblys.Add(baseAssmbly);
@@ -38,13 +38,31 @@ namespace SharingCore.Common
         {
             try
             {
-                return methodInfos_cache.Any(m => name.ToLower().StartsWith(m.ToLower()));
+                return dbInfosCache.Any(m => name.ToLower().StartsWith(m.Name.ToLower()));
             }
             catch
             {
                 return true;
             }
         }
+
+        /// <summary>
+        /// 通过SharingCoreDbs中的扩展方法特性获取分库对象
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        internal static DateTimeSeparateImpl? TryGetDateTimeSeparate(string name)
+        {
+            try
+            {
+                return dbInfosCache.FirstOrDefault(m => m.Name.ToLower() == name.ToLower())?.DateTimeSeparate;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
 
         static void GetExtensionMethods(IEnumerable<Assembly> assemblys, Type extendedType)
         {
@@ -60,11 +78,28 @@ namespace SharingCore.Common
                     .Select(@t => @t);
                 foreach (var item in query)
                 {
+                    var attribute = item.method.GetCustomAttribute<DatabaseAttribute>();
+
+                    var dbInfoByAttribute = new DbInfoByAttribute();
+
+                    //得到扩展方法的返回值
                     var res = item.method.Invoke(null, new object?[]
                     {
                         Activator.CreateInstance(extendedType)
                     });
-                    methodInfos_cache.Add(res.ToString());
+                    dbInfoByAttribute.Name = res.ToString();
+
+                    //如果没有标记特性默认是扩展方法的名称
+                    if (attribute != null)
+                    {
+                        //如果分库
+                        if (!string.IsNullOrWhiteSpace(attribute.Separate))
+                        {
+                            dbInfoByAttribute.DateTimeSeparate = attribute.ParseSeparate();
+                        }
+                    }
+                 
+                    dbInfosCache.Add(dbInfoByAttribute);
                 }
             }
         }
@@ -74,7 +109,7 @@ namespace SharingCore.Common
         /// </summary>
         /// <param name="extendedType"></param>
         /// <returns></returns>
-         static IEnumerable<string> GetExtensionMethods(Type extendedType)
+        static IEnumerable<string> GetExtensionMethods(Type extendedType)
         {
             var methodInfos =
                 extendedType.GetMethods();
@@ -93,6 +128,7 @@ namespace SharingCore.Common
         {
             return IdleBusProvider.Instance?.Quantity ?? 0;
         }
+
         /// <summary>
         /// 获取注册数据库所有的Key
         /// </summary>
@@ -101,5 +137,12 @@ namespace SharingCore.Common
         {
             return IdleBusProvider.Instance.GetKeys().ToList();
         }
+    }
+
+    internal class DbInfoByAttribute
+    {
+        public string Name { get; set; }
+
+        public DateTimeSeparateImpl DateTimeSeparate { get; set; }
     }
 }

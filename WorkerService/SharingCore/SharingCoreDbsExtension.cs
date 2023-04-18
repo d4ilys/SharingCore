@@ -22,7 +22,10 @@ namespace TSP.WokerServices.Base
         /// </summary>
         /// <param name="dbs"></param>
         /// <returns></returns>
+        [Database(Name = "sharingcore_business_{yyyy}", Separate = "createtime=2022-01-01(1 year)")]
         public static string Business(this SharingCoreDbs dbs) => "sharingcore_business";
+
+        
 
         /// <summary>
         /// 主业务库
@@ -31,5 +34,11 @@ namespace TSP.WokerServices.Base
         /// <returns></returns>
         public static string Logs(this SharingCoreDbs dbs) => "sharingcore_log";
 
+        /// <summary>
+        /// 主业务库
+        /// </summary>
+        /// <param name="dbs"></param>
+        /// <returns></returns>
+        public static string VehicleStatistics(this SharingCoreDbs dbs) => "vehicle_statistics";
     }
 }

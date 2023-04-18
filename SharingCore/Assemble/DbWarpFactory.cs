@@ -39,6 +39,28 @@ namespace SharingCore.Assemble
         /// <summary>
         /// 根据条件获取对应的数据库实例，支持多租户
         /// </summary>
+        /// <remarks>如果存在租户：Basics_Tenant01_xxx</remarks>
+        /// <remarks>如果不存在租户：Basics_xxx</remarks>
+        /// <param name="ident">数据库标识</param>
+        /// <param name="tenant">租户标识，默认没有租户</param>
+        /// <returns></returns>
+        public static DbWarp GetByKey(string ident,  string tenant)
+        {
+            if (string.IsNullOrWhiteSpace(ident))
+            {
+                ident = string.Format(ident, tenant);
+            }
+            var db = GetInstance(ident);
+            return new DbWarp
+            {
+                Name = ident,
+                Instance = db
+            };
+        }
+
+        /// <summary>
+        /// 根据条件获取对应的数据库实例，支持多租户
+        /// </summary>
         /// <remarks>如果存在租户：Basics_Tenant01_2022</remarks>
         /// <remarks>如果不存在租户：Basics_2022</remarks>
         /// <param name="ident">数据库标识</param>
@@ -63,7 +85,7 @@ namespace SharingCore.Assemble
             return key;
         }
 
-        private static IFreeSql GetInstance(string key)
+        internal static IFreeSql GetInstance(string key)
         {
             return IdleBusProvider.Instance?.Get(key);
         }

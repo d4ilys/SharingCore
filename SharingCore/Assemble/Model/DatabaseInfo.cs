@@ -5,7 +5,7 @@ using FreeSql;
 
 namespace SharingCore.Assemble.Model
 {
-    public class DbConfig
+    public class DatabaseInfo
     {
         /// <summary>
         /// Key就是区分唯一的标识，Key格式{数据库前缀(Identification)}_租户标识_分库标识
@@ -32,9 +32,5 @@ namespace SharingCore.Assemble.Model
         /// </summary>
         public List<string> Slaves { get; set; } = new List<string>();
 
-        /// <summary>
-        /// 是否加入FreeSql全局过滤器
-        /// </summary>
-        public bool IsFilter { get; set; } = false;
     }
 }

@@ -19,7 +19,8 @@ namespace SharingCore.Extensions
         /// <param name="options">自定义配置</param>
         /// <remarks>数据库配置：[{"Key":"xxxx","ConnectString":"xxxxx","DataType":"SqlServer","Slaves":["ConnectString","ConnectString","ConnectString"]}]</remarks>
         /// <returns></returns>
-        public static IServiceCollection AddSharingCore(this IServiceCollection service, Action<SharingCoreOptions> options)
+        public static IServiceCollection AddSharingCore(this IServiceCollection service,
+            Action<SharingCoreOptions> options)
         {
             var configuration = SharingCoreUtils.Configuration;
             var option = new SharingCoreOptions();
@@ -89,7 +90,7 @@ namespace SharingCore.Extensions
         /// <returns></returns>
         public static IFreeSql GetNowFreeSql(this string dbName, string tenant = "")
         {
-            return GetFreeSql(dbName,DateTime.Now.Year.ToString(), tenant);
+            return GetNowDbWarp(dbName, tenant).Instance;
         }
 
         /// <summary>
@@ -116,7 +117,9 @@ namespace SharingCore.Extensions
         /// <returns></returns>
         public static DbWarp GetNowDbWarp(this string dbName, string tenant = "")
         {
-            return GetDbWarp(dbName, DateTime.Now.Year.ToString(), tenant);
+            var separate = SharingCoreUtils.TryGetDateTimeSeparate(dbName);
+            var name = separate?.GetDbNameByColumnValue(DateTime.Now);
+            return DbWarpFactory.GetByKey(name, tenant);
         }
 
         /// <summary>
@@ -163,9 +166,14 @@ namespace SharingCore.Extensions
         public string? DBConfigKey { get; set; } = string.Empty;
 
         /// <summary>
+        /// 空闲过期时间
+        /// </summary>
+        public TimeSpan IdleTimeout { get; set; } = TimeSpan.FromHours(1);
+
+        /// <summary>
         /// 自定义的数据库信息
         /// </summary>
-        public List<DbConfig>? CustomDbConfigs { get; set; } = null;
+        public List<DatabaseInfo>? CustomDbConfigs { get; set; } = null;
 
         /// <summary>
         /// 是否根据SharingCoreDbs中的扩展方法按需加载数据库
@@ -180,6 +188,7 @@ namespace SharingCore.Extensions
         /// <summary>
         /// 对不同库的FreeSqlBuilder进行扩展注入
         /// </summary>
-        public Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>? FreeSqlBuildersInject = new Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>();
+        public Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>? FreeSqlBuildersInject =
+            new Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>();
     }
 }
