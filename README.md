@@ -72,30 +72,27 @@
 > 创建SharingCoreDbs扩展方法
 
 ~~~C#
- public static class SharingCoreDbsExtension
- {
-     /// <summary>
-     /// 基础库
-     /// </summary>
-     /// <param name="dbs"></param>
-     /// <returns></returns>
-     public static string Basics(this SharingCoreDbs dbs) => "sharingcore_basics";
+/// <summary>
+/// 基础库
+/// </summary>
+/// <param name="dbs"></param>
+/// <returns></returns>
+public static string Basics(this SharingCoreDbs dbs) => "sharingcore_basics";
 
-     /// <summary>
-     /// 主业务库
-     /// </summary>
-     /// <param name="dbs"></param>
-     /// <returns></returns>
-     public static string Business(this SharingCoreDbs dbs) => "sharingcore_business";
+/// <summary>
+/// 主业务库
+/// </summary>
+/// <param name="dbs"></param>
+/// <returns></returns>
+[Database(Name = "sharingcore_business_{yyyy}", Separate = "createtime=2022-01-01(1 year)")]
+public static string Business(this SharingCoreDbs dbs) => "sharingcore_business";
 
-     /// <summary>
-     /// 主业务库
-     /// </summary>
-     /// <param name="dbs"></param>
-     /// <returns></returns>
-     public static string Logs(this SharingCoreDbs dbs) => "sharingcore_log";
-
- }
+/// <summary>
+/// 日志库
+/// </summary>
+/// <param name="dbs"></param>
+/// <returns></returns>
+public static string Logs(this SharingCoreDbs dbs) => "sharingcore_log";
 ~~~
 
 > 可以创建GlobalUsings.cs更方面
