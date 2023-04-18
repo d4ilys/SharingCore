@@ -4,7 +4,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharingCore", "SharingCore\SharingCore.csproj", "{FF3FD5F0-FA84-4160-BB76-92BB076950C7}"
-EndProject
+EndProject 
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "WorkerService\WorkerService.csproj", "{9EF5F692-BC72-418F-9D89-0509A4B0C9FA}"
 EndProject
 Global
