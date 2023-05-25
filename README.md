@@ -12,7 +12,7 @@
 
 **前言**
 
-话说2021年开始了一个基于ASP.NET Core On Kubernetes 微服务的项目，谈到微服务 多库环境下 分布式事务、分库分表这些问题都是逃不开的，于是首先从ORM开始调研，由于我身为这个项目的架构师  还是要考虑到一些重要的因素 **功能强大、支持多种数据库（并且行为一致，防止出现换库的情况）、支持分库分表** 等等，这时候第一时间就想到了 [FreeSql](https://github.com/dotnetcore/FreeSql)  ，FreeSql的架构设计非常好，每一种支持的数据库都有对应的Provider实现 做到行为一致，而且支持CodeFirst和DbFirst，分库分表FreeSql也有比较简单切有效的方案，本人也经常向FreeSql的作者叶老板请教学习，非常佩服他的技术与人品，也非常感谢他能做出这么好的ORM框架。
+话说2021年开始了一个基于ASP.NET Core  微服务的项目，谈到微服务 多库环境下 分布式事务、分库分表这些问题都是逃不开的，于是首先从ORM开始调研，需要考虑到一些重要的因素 **功能强大、支持多种数据库（并且行为一致，防止出现换库的情况）、支持分库分表** 等等，这时候第一时间就想到了 [FreeSql](https://github.com/dotnetcore/FreeSql)  ，FreeSql的架构设计非常好，每一种支持的数据库都有对应的Provider实现 做到行为一致，而且支持CodeFirst和DbFirst，分库分表FreeSql也有比较简单切有效的方案，本人也经常向FreeSql的作者叶老板请教学习，非常佩服他的技术与人品，也非常感谢他能做出这么好的ORM框架。
 
 **分布式事务**
 
@@ -272,6 +272,7 @@ var businessWarp = Dbs.Business().GetNowDbWarp();
 var basicsWarp = Dbs.Basics().GetDbWarp();
 using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
 {
+    //监听到有提交失败的库时，启动事务补偿
     tran.OnCommitFail += TransactionCompensation;
     try
     {
@@ -291,10 +292,10 @@ using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
         };
         var r2 = tran.Orm2.Insert<users>(userData).ExecuteAffrows();
         
-        //随机发生异常，如果是普通异常，并且不在Commit时，除第一个库 发生数据库宕机或者网络问题外，都可以正常回滚
+        //随机发生异常，如果是普通异常，并且Commit之前，都可以正常回滚
         if (new Random().Next(5) == 1)
         {
-            throw new Exception("");
+            throw new Exception("业务中发生异常，所有事务都要回滚~");
         }
 		//日志，用于记录日志信息，进行事务补偿
         var log = new multi_transaction_log()
