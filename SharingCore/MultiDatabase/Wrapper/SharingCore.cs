@@ -32,7 +32,7 @@ namespace SharingCore.MultiDatabase.Wrapper
         }
         /// <summary>
         /// 多库事务
-        /// </summary>
+        /// </summar y>
         /// <param name="param">Db包装类</param>
         /// <returns></returns>
         public static MultiDatabaseTransaction2 Transaction(DbWarp dbWarp1, DbWarp dbWarp2)

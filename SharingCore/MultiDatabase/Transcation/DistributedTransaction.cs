@@ -1,31 +1,26 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
+﻿using FreeSql.Internal.ObjectPool;
+using Newtonsoft.Json;
 using SharingCore.Assemble.Model;
-using SharingCore.Common;
 using SharingCore.MultiDatabase.Model;
 using SharingCore.MultiDatabase.Utils;
-using FreeSql.Internal.ObjectPool;
-using Newtonsoft.Json;
-using static FreeSql.Internal.GlobalFilter;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
 
 namespace SharingCore.MultiDatabase.Transcation
 {
     public class DistributedTransaction : IDisposable
     {
         //记录需要的数据库的key
-        private IEnumerable<DbWarp> _iFreeSqlCollect = new List<DbWarp>();
+        private readonly IEnumerable<DbWarp> _fsqlWarpCollect = new List<DbWarp>();
 
         //连接池 
-        private Dictionary<string, Object<DbConnection>> _connections = new Dictionary<string, Object<DbConnection>>();
+        private ConcurrentDictionary<string, Object<DbConnection>> _connections = new ConcurrentDictionary<string, Object<DbConnection>>();
 
         //用到的事务
-        internal Dictionary<string, DbTransaction> Transactions = new Dictionary<string, DbTransaction>();
+        internal ConcurrentDictionary<string, DbTransaction> Transactions = new ConcurrentDictionary<string, DbTransaction>();
 
         //日志ID
         private long logId = 0;
@@ -34,28 +29,23 @@ namespace SharingCore.MultiDatabase.Transcation
         internal event Action<string, DbWarp, Exception>? OnCommitFail = null;
 
         //构造方法
-        public DistributedTransaction(IEnumerable<DbWarp> iFreeSqlCollect) => _iFreeSqlCollect = iFreeSqlCollect;
-
-        /// <summary>
-        /// 记录每个事务执行的SQL
-        /// </summary>
-        //public AsyncLocal<string> TranSql { get; set; } = new AsyncLocal<string>();
+        public DistributedTransaction(IEnumerable<DbWarp> fsqlWarpCollect) => _fsqlWarpCollect = fsqlWarpCollect;
 
         /// <summary>
         /// 开启事务
         /// </summary>
         public void BeginTran()
         {
-            foreach (var dbInstance in _iFreeSqlCollect)
+            foreach (var dbInstance in _fsqlWarpCollect)
             {
                 var db = dbInstance.Instance;
                 //获取连接池对象
                 var dbConnection = db.Ado.MasterPool.Get();
                 //添加到字典用于归还
-                _connections.Add(dbInstance.Name, dbConnection);
+                _connections.TryAdd(dbInstance.Name, dbConnection);
                 //获取事务对象
                 var transaction = dbConnection.Value.BeginTransaction();
-                Transactions.Add(dbInstance.Name, transaction);
+                Transactions.TryAdd(dbInstance.Name, transaction);
                 CurdAfterLog.CurrentLog.Value = "";
             }
         }
@@ -107,7 +97,7 @@ namespace SharingCore.MultiDatabase.Transcation
                         #endregion
 
                         log.exec_sql = JsonConvert.SerializeObject(tranSqlDictionary);
-                        var firstIFreeSql = _iFreeSqlCollect.First().Instance;
+                        var firstIFreeSql = _fsqlWarpCollect.First().Instance;
                         //如果不存日志表，先创建
                         if (!firstIFreeSql.DbFirst.ExistsTable(nameof(multi_transaction_log)))
                         {
@@ -181,18 +171,18 @@ namespace SharingCore.MultiDatabase.Transcation
             if (isSuccess == false)
             {
                 //删除日志
-                _iFreeSqlCollect.First().Instance.Delete<multi_transaction_log>().Where(m => m.id == logId)
+                _fsqlWarpCollect.First().Instance.Delete<multi_transaction_log>().Where(m => m.id == logId)
                     .ExecuteAffrows();
             }
             else
             {
                 var result_msg = JsonConvert.SerializeObject(resultDictionary);
-                var upRes = _iFreeSqlCollect.First().Instance.Update<multi_transaction_log>().Set(t => t.successful, 1)
+                var upRes = _fsqlWarpCollect.First().Instance.Update<multi_transaction_log>().Set(t => t.successful, 1)
                     .Set(t => t.result_msg, result_msg).Where(t => t.id == logId).ExecuteAffrows();
                 if (upRes > 0)
                 {
                     //事件注册
-                    OnCommitFail?.Invoke(logId.ToString(), _iFreeSqlCollect.First(), null);
+                    OnCommitFail?.Invoke(logId.ToString(), _fsqlWarpCollect.First(), null);
                 }
             }
 
@@ -224,7 +214,7 @@ namespace SharingCore.MultiDatabase.Transcation
         {
             try
             {
-                foreach (var key in _iFreeSqlCollect)
+                foreach (var key in _fsqlWarpCollect)
                 {
                     try
                     {

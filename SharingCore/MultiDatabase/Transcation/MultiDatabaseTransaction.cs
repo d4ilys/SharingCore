@@ -14,8 +14,8 @@ namespace SharingCore.MultiDatabase.Transcation
         private DistributedTransaction _internel;
         private DbWarp _dbWarp1;
         private DbWarp _dbWarp2;
-        public TranFreeSql Orm1;
-        public TranFreeSql Orm2;
+        public DTranFreeSql Orm1;
+        public DTranFreeSql Orm2;
         public event Action<string, DbWarp, Exception>? OnCommitFail;
 
         public MultiDatabaseTransaction2(DbWarp dbWarp1, DbWarp dbWarp2)
@@ -32,8 +32,8 @@ namespace SharingCore.MultiDatabase.Transcation
         public void BeginTran()
         {
             _internel.BeginTran();
-            Orm1 = new TranFreeSql(_dbWarp1.Instance, _internel.Transactions[_dbWarp1.Name]);
-            Orm2 = new TranFreeSql(_dbWarp2.Instance, _internel.Transactions[_dbWarp2.Name]);
+            Orm1 = new DTranFreeSql(_dbWarp1.Instance, _internel.Transactions[_dbWarp1.Name]);
+            Orm2 = new DTranFreeSql(_dbWarp2.Instance, _internel.Transactions[_dbWarp2.Name]);
         }
 
         public void Rellback() => _internel.Rellback();
@@ -49,9 +49,9 @@ namespace SharingCore.MultiDatabase.Transcation
     public class MultiDatabaseTransaction3 : IDisposable
     {
         private DistributedTransaction local;
-        public TranFreeSql Orm1;
-        public TranFreeSql Orm2;
-        public TranFreeSql Orm3;
+        public DTranFreeSql Orm1;
+        public DTranFreeSql Orm2;
+        public DTranFreeSql Orm3;
         private DbWarp _dbWarp1;
         private DbWarp _dbWarp2;
         private DbWarp _dbWarp3;
@@ -70,9 +70,9 @@ namespace SharingCore.MultiDatabase.Transcation
         public void BeginTran()
         {
             local.BeginTran();
-            Orm1 = new TranFreeSql(_dbWarp1.Instance, local.Transactions[_dbWarp1.Name]);
-            Orm2 = new TranFreeSql(_dbWarp2.Instance, local.Transactions[_dbWarp2.Name]);
-            Orm3 = new TranFreeSql(_dbWarp3.Instance, local.Transactions[_dbWarp3.Name]);
+            Orm1 = new DTranFreeSql(_dbWarp1.Instance, local.Transactions[_dbWarp1.Name]);
+            Orm2 = new DTranFreeSql(_dbWarp2.Instance, local.Transactions[_dbWarp2.Name]);
+            Orm3 = new DTranFreeSql(_dbWarp3.Instance, local.Transactions[_dbWarp3.Name]);
         }
 
         public void Rellback() => local.Rellback();

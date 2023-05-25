@@ -9,15 +9,15 @@ using System.Transactions;
 
 namespace SharingCore.MultiDatabase.Transcation
 {
-    public class TranFreeSql
+    public class DTranFreeSql
     {
         private IFreeSql Orm;
         private DbTransaction _transaction;
 
-        public TranFreeSql(IFreeSql orm, DbTransaction transaction)
+        public DTranFreeSql(IFreeSql orm, DbTransaction transaction)
         {
             Orm = orm;
-            _transaction = transaction;
+            _transaction = transaction ?? throw new Exception("指定的事务不存在.");
         }
 
         public IDelete<T1> Delete<T1>() where T1 : class => Orm.Delete<T1>().WithTransaction(_transaction);

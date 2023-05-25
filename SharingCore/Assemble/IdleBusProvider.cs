@@ -221,7 +221,7 @@ namespace SharingCore.Assemble
                         //是否显示日志
                         if (Convert.ToBoolean(configuration["ShowSqlLog"]))
                         {
-                            freeSqlBuild.UseNoneCommandParameter(true).UseMonitorCommand(cmd =>
+                            freeSqlBuild.UseMonitorCommand(cmd =>
                             {
                                 Console.WriteLine(
                                     "------------------------------------------------------------------------------------------------------------");
