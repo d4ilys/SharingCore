@@ -278,24 +278,27 @@ using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
     try
     {
         tran.BeginTran();
-        var r1 = tran.Orm1.Insert(new order
-                                  {
-                                      buyer_name = $"事务{i}",
-                                      commodity_name = "事务",
-                                      order_time = DateTime.Now
-                                  }).ExecuteAffrows();
-
-        var r2 = tran.Orm2.Insert<users>(new users()
-                                         {
-                                             name = $"事务{i}",
-                                             password = "123",
-                                             username = "1231"
-                                         }).ExecuteAffrows();
+        var orderData = new order 
+        {
+            buyer_name = $"事务{i}",
+            commodity_name = "事务",
+            order_time = DateTime.Now
+        };
+        var r1 = tran.Orm1.Insert(orderData).ExecuteAffrows();
+		var userData = new users
+        {
+            name = $"事务{i}",
+            password = "123",
+            username = "tom"
+        };
+        var r2 = tran.Orm2.Insert<users>(userData).ExecuteAffrows();
+        
+        //随机发生异常，如果是普通异常，并且不在Commit时，除第一个库 发生数据库宕机或者网络问题外，都可以正常回滚
         if (new Random().Next(5) == 1)
         {
             throw new Exception("");
         }
-
+		//日志，用于记录日志信息，进行事务补偿
         var log = new multi_transaction_log()
         {
             content = $"{i}分布式事务测试...",
@@ -306,6 +309,7 @@ using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
     }
     catch
     {
+        //发生普通异常 直接回滚
         tran.Rellback();
     }
 }
