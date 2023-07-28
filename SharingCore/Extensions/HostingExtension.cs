@@ -9,6 +9,7 @@ namespace SharingCore.Extensions
     {
         public static IHostBuilder InjectSharingCore(this IHostBuilder builder)
         {
+
             builder.ConfigureServices((hostContext, services) =>
             {
                 // 存储配置对象

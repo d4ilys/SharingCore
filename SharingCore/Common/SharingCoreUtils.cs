@@ -137,6 +137,29 @@ namespace SharingCore.Common
         {
             return IdleBusProvider.Instance.GetKeys().ToList();
         }
+
+
+        /// <summary>
+        /// 通过命名空间得到所有要创建的实体类.
+        /// </summary>
+        /// <typeparam name="IEntity"></typeparam>
+        /// <param name="entitiesFullName">根据需要调整 entitiesFullName 下的命名空间值</param>
+        /// <returns></returns>
+        public static Type[] GetTypesByNameSpace<IEntity>(List<string>? entitiesFullName = null)
+        {
+            List<Type> tableAssembies = new List<Type>();
+            if (entitiesFullName == null)
+            {
+                entitiesFullName = new List<string>();
+            }
+            foreach (Type type in Assembly.GetAssembly(typeof(IEntity)).GetExportedTypes())
+            foreach (var fullname in entitiesFullName)
+                if (type.FullName.StartsWith(fullname) && type.IsClass)
+                    tableAssembies.Add(type);
+
+            return tableAssembies.ToArray();
+        }
+
     }
 
     internal class DbInfoByAttribute

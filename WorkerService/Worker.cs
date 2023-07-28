@@ -26,7 +26,6 @@ namespace WorkerService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            
         }
 
         public void InitTables()
@@ -51,7 +50,7 @@ namespace WorkerService
             Console.WriteLine(executeAffrows);
 
 //通过日期范围进行插入 
-            SharingCores.NoQuery<order>(noQuery =>
+            SharingFeatures.NoQuery<order>(noQuery =>
                 {
                     noQuery.Db.Insert(new order
                         {
@@ -67,7 +66,7 @@ namespace WorkerService
                 //事务补偿
                 (logId, dbWarp, exception) => { });
 
-            SharingCores.NoQuery<order>(noQuery =>
+            SharingFeatures.NoQuery<order>(noQuery =>
                 {
                     noQuery.Db.Insert(new order
                         {
@@ -91,7 +90,7 @@ namespace WorkerService
 
         public void QueryPageListTest(int page)
         {
-            var result = SharingCores.QueryPageList(query =>
+            var result = SharingFeatures.QueryPageList(query =>
                 {
                     var result = query.Db.Select<order>()
                         .PageCore(query, out var count)
@@ -107,7 +106,7 @@ namespace WorkerService
 
         public async Task QueryAllTest()
         {
-            var list = await SharingCores.QueryAsync(query =>
+            var list = await SharingFeatures.QueryAsync(query =>
             {
                 var list = query.Db.Select<order>()
                     .Where(o => o.order_time.Value.BetweenEnd(query.StartTime, query.EndTime)).ToList();
@@ -119,7 +118,7 @@ namespace WorkerService
 
         public async Task QueryToOneTest()
         {
-            var list = await SharingCores.QueryToOneAsync(query =>
+            var list = await SharingFeatures.QueryToOneAsync(query =>
             {
                 var list = query.Db.Select<order>()
                     .Where(o => o.id == 199).ToList();
@@ -133,38 +132,36 @@ namespace WorkerService
         {
             var businessWarp = Dbs.Business().GetNowDbWarp();
             var basicsWarp = Dbs.Basics().GetDbWarp();
-            using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
+            using var tran = SharingFeatures.Transaction(businessWarp, basicsWarp);
+            tran.OnCommitFail += TransactionCompensation;
+            try
             {
-                tran.OnCommitFail += TransactionCompensation;
-                try
+                tran.BeginTran();
+                var r1 = tran.Orm1.Insert(new order
                 {
-                    tran.BeginTran();
-                    var r1 = tran.Orm1.Insert(new order
-                    {
-                        buyer_name = $"事务{i}",
-                        commodity_name = "事务",
-                        order_time = DateTime.Now
-                    }).ExecuteAffrows();
+                    buyer_name = $"事务{i}",
+                    commodity_name = "事务",
+                    order_time = DateTime.Now
+                }).ExecuteAffrows();
 
-                    var r2 = tran.Orm2.Insert<users>(new users()
-                    {
-                        name = $"事务{i}",
-                        password = "123",
-                        username = "1231"
-                    }).ExecuteAffrows();
-
-
-                    var log = new multi_transaction_log()
-                    {
-                        content = $"{i}分布式事务测试...",
-                    };
-                    //提交事务并返回结果
-                    var result = tran.Commit(log);
-                }
-                catch
+                var r2 = tran.Orm2.Insert<users>(new users()
                 {
-                    tran.Rellback();
-                }
+                    name = $"事务{i}",
+                    password = "123",
+                    username = "1231"
+                }).ExecuteAffrows();
+
+
+                var log = new multi_transaction_log()
+                {
+                    content = $"{i}分布式事务测试...",
+                };
+                //提交事务并返回结果
+                var result = tran.Commit(log);
+            }
+            catch
+            {
+                tran.Rellback();
             }
 
             //如果第一个库提交成功，其他库提交的过程中失败，那么将这里进行事务补偿

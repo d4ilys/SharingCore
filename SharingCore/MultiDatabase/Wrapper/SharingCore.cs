@@ -17,7 +17,7 @@ namespace SharingCore.MultiDatabase.Wrapper
     /// <summary>
     /// 包装类
     /// </summary>
-    public class SharingCores
+    public class SharingFeatures
     {
         /// <summary>
         /// 多库事务
@@ -26,8 +26,10 @@ namespace SharingCore.MultiDatabase.Wrapper
         /// <returns></returns>
         public static DistributedTransaction Transaction(IEnumerable<DbWarp> dbWarps)
         {
-            var local = new AsyncLocal<DistributedTransaction>();
-            local.Value = new DistributedTransaction(dbWarps);
+            var local = new AsyncLocal<DistributedTransaction>
+            {
+                Value = new DistributedTransaction(dbWarps)
+            };
             return local.Value;
         }
         /// <summary>

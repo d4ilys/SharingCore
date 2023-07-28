@@ -54,7 +54,7 @@ namespace SharingCore.MultiDatabase.NoQuery
                     dbWarpList.Add(warp);
                 }
 
-                using (var tran = SharingCores.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
+                using (var tran = SharingFeatures.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
                 {
                     //绑定事件，用于事务补偿
                     tran.OnCommitFail += OnCommitFail;

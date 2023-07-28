@@ -17,10 +17,10 @@ namespace SharingCore.MultiDatabase.Transcation
         private readonly IEnumerable<DbWarp> _fsqlWarpCollect = new List<DbWarp>();
 
         //连接池 
-        private ConcurrentDictionary<string, Object<DbConnection>> _connections = new ConcurrentDictionary<string, Object<DbConnection>>();
+        private Dictionary<string, Object<DbConnection>> _connections = new Dictionary<string, Object<DbConnection>>();
 
         //用到的事务
-        internal ConcurrentDictionary<string, DbTransaction> Transactions = new ConcurrentDictionary<string, DbTransaction>();
+        internal Dictionary<string, DbTransaction> Transactions = new Dictionary<string, DbTransaction>();
 
         //日志ID
         private long logId = 0;
@@ -182,7 +182,7 @@ namespace SharingCore.MultiDatabase.Transcation
                 if (upRes > 0)
                 {
                     //事件注册
-                    OnCommitFail?.Invoke(logId.ToString(), _fsqlWarpCollect.First(), null);
+                    OnCommitFail?.Invoke(logId.ToString(), _fsqlWarpCollect.First(), null); 
                 }
             }
 

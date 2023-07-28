@@ -25,7 +25,7 @@ namespace WorkerService
                         { FreeSqlFilterType.Communal, f => f.isDelete == 0 } //其他库公用的过滤器
                     }, options =>
                     {
-                        options.DBConfigKey = "CustomDbConfig"; //指定配置文件中的KEY，如不指定 默认为 SharingCoreDbConfig
+                        options.DBConfigKey = "CustomDbConfig"; //指定配置文件中的KEY，如不指定 默认为 SharingCore
                         options.DemandLoading = true; //按需加载
                         options.IdleTimeout = TimeSpan.FromSeconds(20);
                         //FreeSqlBuilder时候每个库可以扩展

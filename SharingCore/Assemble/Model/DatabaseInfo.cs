@@ -31,6 +31,15 @@ namespace SharingCore.Assemble.Model
         /// 读写分离-从库
         /// </summary>
         public List<string> Slaves { get; set; } = new List<string>();
+    }
 
+    public class SharingCoreDbConfig
+    {
+        /// <summary>
+        /// 是否显示SQL
+        /// </summary>
+        public bool ShowSqlLog { get; set; } = true;
+
+        public List<DatabaseInfo> DatabaseInfo { get; set; }
     }
 }

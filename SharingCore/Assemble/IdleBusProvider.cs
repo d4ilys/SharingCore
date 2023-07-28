@@ -153,46 +153,31 @@ namespace SharingCore.Assemble
                 //获取到Apollo统一配置中心的数据信息
                 //初始化数据库对象，支持配置文件和自定义
                 var configName = string.IsNullOrWhiteSpace(options?.DBConfigKey)
-                    ? "SharingCoreDbConfig"
+                    ? "SharingCore"
                     : options?.DBConfigKey;
 
 
-                var dbConfigs = configuration.GetSection(configName)?.Get<List<DatabaseInfo>>();
+                var dbConfigs = configuration.GetSection(configName)?.Get<SharingCoreDbConfig>();
 
                 if (dbConfigs == null)
                 {
                     var sharingCoreDbConfigString = configuration[configName] ?? "";
-                    dbConfigs = JsonConvert.DeserializeObject<List<DatabaseInfo>>(sharingCoreDbConfigString);
-                    if (dbConfigs == null || !dbConfigs.Any())
+                    dbConfigs = JsonConvert.DeserializeObject<SharingCoreDbConfig>(sharingCoreDbConfigString);
+                    if (dbConfigs == null || !dbConfigs.DatabaseInfo.Any())
                     {
-                        throw new Exception(@"请在配置文件中配置数据库连接信息：
- ""SharingCoreDbConfig"": [{
-      ""Key"": ""Bussiness"",
-      ""Identification"": ""Bussiness"",
-      ""DataType"": ""MySql"",
-      ""ConnectString"": ""Data Source=Host;Port=Port;User ID=root;Password=xxxxx;Initial Catalog=xxxx;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;"",
-      ""Slaves"": []
-    },
-    //分库分表
-    {
-      ""Key"": ""Trajectory_2022"",
-      ""Identification"": ""Trajectory"",
-      ""DataType"": ""MySql"",
-      ""ConnectString"": ""Data Source=Host;Port=Port;User ID=root;Password=xxxxx;Initial Catalog=xxxx;Charset=utf8;SslMode=none;AllowLoadLocalInfile=true;"",
-       ""Slaves"": []
-    }]
-");
+                        throw new Exception(@"请检查配置文件中配置信息");
                     }
                 }
 
+                //兼容自定义数据库配置
                 if (options?.CustomDbConfigs != null)
                 {
-                    dbConfigs ??= new List<DatabaseInfo>();
-                    dbConfigs.AddRange(options?.CustomDbConfigs);
+                    dbConfigs.DatabaseInfo ??= new List<DatabaseInfo>();
+                    dbConfigs.DatabaseInfo.AddRange(options?.CustomDbConfigs);
                 }
 
                 //连接放入对象管理器
-                foreach (var item in dbConfigs)
+                foreach (var item in dbConfigs.DatabaseInfo)
                 {
                     if (Instance.Exists(item.Key)) //删除这个对象然后重新build
                     {
@@ -219,9 +204,9 @@ namespace SharingCore.Assemble
                         var freeSqlBuild = new FreeSqlBuilder()
                             .UseConnectionString(DataTypeAdapter.GetDataType(item.DataType), item.ConnectString);
                         //是否显示日志
-                        if (Convert.ToBoolean(configuration["ShowSqlLog"]))
+                        if (dbConfigs.ShowSqlLog)
                         {
-                            freeSqlBuild.UseMonitorCommand(cmd =>
+                            freeSqlBuild.UseNoneCommandParameter(true).UseMonitorCommand(cmd =>
                             {
                                 Console.WriteLine(
                                     "------------------------------------------------------------------------------------------------------------");

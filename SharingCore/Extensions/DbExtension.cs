@@ -20,7 +20,7 @@ namespace SharingCore.Extensions
         /// <remarks>数据库配置：[{"Key":"xxxx","ConnectString":"xxxxx","DataType":"SqlServer","Slaves":["ConnectString","ConnectString","ConnectString"]}]</remarks>
         /// <returns></returns>
         public static IServiceCollection AddSharingCore(this IServiceCollection service,
-            Action<SharingCoreOptions> options)
+            Action<SharingCoreOptions>? options = null)
         {
             var configuration = SharingCoreUtils.Configuration;
             var option = new SharingCoreOptions();
@@ -178,7 +178,7 @@ namespace SharingCore.Extensions
         /// <summary>
         /// 是否根据SharingCoreDbs中的扩展方法按需加载数据库
         /// </summary>
-        public bool DemandLoading { get; set; } = true;
+        public bool DemandLoading { get; set; } = false;
 
         /// <summary>
         /// 父项目的Assembly，用于扫描SharingCoreDbs扩展方法

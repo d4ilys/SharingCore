@@ -33,9 +33,12 @@
 #### 1.appsettings.json配置 
 
 ~~~json
-  "ShowSqlLog": true,   //是否显示SQL日志
-  //数据库配置信息
-  "CustomDbConfig": [
+
+{
+   "SharingCore":{
+   "ShowSqlLog": true,   //是否显示SQL日志
+   //数据库配置信息
+   "DatabaseInfo": [
     {
       "Key": "sharingcore_basics", //数据库名即可
       "Identification": "sharingcore_basics",
@@ -66,13 +69,15 @@
     {
       "Key": "sharingcore_log",
       "Identification": "sharingcore_log",
-      "DataType": "MySql",
+      "DataType": "questdb",
       "ConnectString": "host=host;port=8812;username=admin;password=quest;database=qdb;ServerCompatibilityMode=NoTypeLoading;",
       "Slaves": [
       ]
     }
-
   ]
+ }
+}
+
 ~~~
 
 #### 2.初始化数据库
@@ -106,8 +111,10 @@ public static string Logs(this SharingCoreDbs dbs) => "sharingcore_log";
 > 可以创建GlobalUsings.cs更方面
 
 ~~~c#
+
 global using static SharingCore.MultiDatabase.Wrapper.SharingCores;
 global using SharingCore;
+
 ~~~
 
 > ASP.NET Core 6.0/7.0 Program.cs中
@@ -115,10 +122,7 @@ global using SharingCore;
 ~~~c#
 var builder = WebApplication.CreateBuilder(args).InjectSharingCore(); //注入
 //简单方式
-services.AddSharingCore(options =>
-{
-   options.DBConfigKey = "CustomDbConfig";  //指定配置文件中的KEY，如不指定 默认为 SharingCoreDbConfig
-});
+services.AddSharingCore();
 //全局过滤器
 builder.Services.AddSharingCore<FreeSqlFilter>(f => f.isDelete == 0);
 //复杂构建
@@ -168,7 +172,7 @@ var Business_2023 = Dbs.Business().GetNowFreeSql().Ado.Query<string>("select 1")
 #### 5.跨库分页查询
 
 ~~~C#
-var result = SharingCores.QueryPageList(query =>
+var result = SharingFeatures.QueryPageList(query =>
 {
     var result = query.Db.Select<order>().PageCore(query, out var count)
      			.ToListCore(o => o, query, count);
@@ -190,7 +194,7 @@ var executeAffrows = Business_Now.Insert(new order
 Console.WriteLine(executeAffrows);
 
 //通过日期范围进行插入 
-SharingCores.NoQuery<order>(noQuery =>
+SharingFeatures.NoQuery<order>(noQuery =>
     {
         noQuery.Db.Insert(new order
             {
@@ -206,7 +210,7 @@ SharingCores.NoQuery<order>(noQuery =>
     //事务补偿
     (logId, dbWarp, exception) => { });
 
-SharingCores.NoQuery<order>(noQuery =>
+SharingFeatures.NoQuery<order>(noQuery =>
     {
         noQuery.Db.Insert(new order
             {
@@ -231,7 +235,7 @@ SharingCores.NoQuery<order>(noQuery =>
 #### 7.跨库并行查询（不分页）
 
 ~~~C#
-var list = await SharingCores.QueryAsync(query =>
+var list = await SharingFeatures.QueryAsync(query =>
 {
       var list = query.Db.Select<order>()
       .Where(o => o.order_time.Value.BetweenEnd(query.StartTime, query.EndTime)).ToList();
@@ -243,7 +247,7 @@ Console.WriteLine(list.Count);
 #### 8.跨库ToOne查询
 
 ~~~C# 
-var list = await SharingCores.QueryToOneAsync(query =>
+var list = await SharingFeatures.QueryToOneAsync(query =>
 {
       var list = query.Db.Select<order>()
       .Where(o => o.id == 199).ToList();
@@ -255,7 +259,7 @@ Console.WriteLine(list.Count);
 #### 9.跨库Any查询
 
 ~~~C# 
-var list = await SharingCore.QueryAnyAsync(func =>
+var list = await SharingFeatures.QueryAnyAsync(func =>
 {
     var list = func.Db.Select<vehicleLudan>()
         .Where(l => l.dateLudan.Value.BetweenEnd(func.StartTime, func.EndTime))
@@ -270,7 +274,7 @@ var list = await SharingCore.QueryAnyAsync(func =>
 ~~~C#
 var businessWarp = Dbs.Business().GetNowDbWarp();
 var basicsWarp = Dbs.Basics().GetDbWarp();
-using (var tran = SharingCores.Transaction(businessWarp, basicsWarp))
+using (var tran = SharingFeatures.Transaction(businessWarp, basicsWarp))
 {
     //监听到有提交失败的库时，启动事务补偿
     tran.OnCommitFail += TransactionCompensation;
