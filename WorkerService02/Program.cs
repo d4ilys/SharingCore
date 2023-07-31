@@ -14,9 +14,7 @@ namespace WorkerService02
                     services.AddHostedService<Worker>();
                     services.AddSharingCore(options =>
                     {
-                        var oneselfCustom = new CustomDatabaseSettings();
-                        oneselfCustom.FreeSqlFilter<FreeSqlFilter>(f => f.IsDelete == 0);
-                        options.CustomAllDatabaseSettings = oneselfCustom;
+                        options.CustomAllDatabaseSettings.FreeSqlFilter<FreeSqlFilter>(f => f.IsDelete == 0);
                     });
                 })
                 .Build();

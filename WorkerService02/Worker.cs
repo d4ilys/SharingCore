@@ -28,7 +28,8 @@ namespace WorkerService02
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int IsUpdate { get; set; }
+        public int IsDelete
+        { get; set; }
     }
 
     public class Students

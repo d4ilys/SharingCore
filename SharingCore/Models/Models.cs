@@ -42,7 +42,7 @@ namespace SharingCore
         /// <summary>
         /// 对所有库定制化设置，优先级低于单库设置
         /// </summary>
-        public CustomDatabaseSettings? CustomAllDatabaseSettings { get; set; } = null;
+        public CustomDatabaseSettings CustomAllDatabaseSettings { get; set; } = new CustomDatabaseSettings();
     }
 
     public class CustomDatabaseSettings
