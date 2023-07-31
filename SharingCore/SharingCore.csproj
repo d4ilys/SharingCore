@@ -6,7 +6,7 @@
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	  <Authors>Daily</Authors>
-	  <Version>1.0.4</Version>
+	  <Version>1.1.0</Version>
 	  <Description>基于FreeSql实现 跨库分页查询、分表查询、分布式事务</Description>
 	  <PackageId>Daily.FreeSql.SharingCore</PackageId>
 	  <Product>Daily.FreeSql.SharingCore</Product>

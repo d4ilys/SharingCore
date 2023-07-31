@@ -1,18 +1,13 @@
-﻿using SharingCore.Assemble.Model;
-using SharingCore.MultiDatabase.Utils;
-using FreeSql;
+﻿using FreeSql;
 using FreeSql.Aop;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using SharingCore.Assemble.Enums;
 using SharingCore.Common;
+using SharingCore.MultiDatabase.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using SharingCore.Extensions;
-using System.Xml.Linq;
 
 namespace SharingCore.Assemble
 {
@@ -25,102 +20,17 @@ namespace SharingCore.Assemble
         public static IdleBus<IFreeSql>? Instance = null;
 
         /// <summary>
-        /// 初始化FreeSql对象，存放入IdleBus
-        /// </summary>
-        /// <param name="configuration"></param>
-        /// <returns></returns>
-        public static void InitIdleBus(IConfiguration configuration, SharingCoreOptions? options)
-        {
-            void Init()
-            {
-                InitCommon(configuration, options, null);
-            }
-
-            Init();
-            ChangeToken.OnChange(() => configuration?.GetReloadToken(), () =>
-            {
-                //热更新
-                if (configuration != null)
-                {
-                    Init();
-                }
-            });
-        }
-
-        /// <summary>
         /// 初始化时所有FreeSql对象,存放入IdleBus,并声明FreeSql全局过滤器
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="configuration"></param>
-        /// <param name="filter"></param>
-        public static void InitIdleBus<T>(IConfiguration configuration, Expression<Func<T, bool>>? filter,
-            SharingCoreOptions? options)
+        /// <param name="options"></param>
+        public static void InitIdleBus(IConfiguration configuration, SharingCoreOptions options)
         {
             void Init()
             {
                 //全局过滤器
-                InitCommon(configuration, options, (db, name) =>
-                {
-                    if (filter != null)
-                    {
-                        db.GlobalFilter.Apply($"GlobalFilters_{Guid.NewGuid()}", filter);
-                    }
-
-                    return db;
-                });
-            }
-
-            Init();
-            ChangeToken.OnChange(() => configuration?.GetReloadToken(), () =>
-            {
-                //热更新
-                if (configuration != null)
-                {
-                    Init();
-                }
-            });
-        }
-
-        /// <summary>
-        /// 初始化时所有FreeSql对象,存放入IdleBus,并声明FreeSql全局过滤器
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="configuration"></param>
-        /// <param name="filters"></param>
-        public static void InitIdleBus<T>(IConfiguration configuration,
-            Dictionary<string, Expression<Func<T, bool>>?>? filters, SharingCoreOptions options)
-        {
-            void Init()
-            {
-                //全局过滤器
-                InitCommon(configuration, options, (db, name) =>
-                {
-                    //在所有库中查找对应的过滤器
-                    var exist = filters.TryGetValue(name, out var value);
-                    switch (exist)
-                    {
-                        case true:
-                        {
-                            //如果指定了过滤器，但是设置的值为NULL，则不做任何处理
-                            var visitor = new FreeSqlFilterExpressionVisitor();
-                            visitor.Visit(value);
-                            if (value != null && visitor.IsNon() == false)
-                                db.GlobalFilter.Apply($"{name}_GlobalFilters_{Guid.NewGuid()}", value);
-
-                            break;
-                        }
-                        case false: //如果没有指定过滤器 则使用 通用过滤器
-                        {
-                            var existCommunalFilter =
-                                filters.TryGetValue(FreeSqlFilterType.Communal, out var communalFilter);
-                            if (existCommunalFilter)
-                                db.GlobalFilter.Apply($"{name}_GlobalFilters_{Guid.NewGuid()}", communalFilter);
-                            break;
-                        }
-                    }
-
-                    return db;
-                });
+                InitCommon(configuration, options);
             }
 
             Init();
@@ -135,8 +45,7 @@ namespace SharingCore.Assemble
         }
 
 
-        private static void InitCommon(IConfiguration configuration, SharingCoreOptions? options,
-            Func<IFreeSql, string, IFreeSql>? filterFunc = null)
+        private static void InitCommon(IConfiguration configuration, SharingCoreOptions options)
         {
             try
             {
@@ -150,31 +59,7 @@ namespace SharingCore.Assemble
                     }
                 }
 
-                //获取到Apollo统一配置中心的数据信息
-                //初始化数据库对象，支持配置文件和自定义
-                var configName = string.IsNullOrWhiteSpace(options?.DBConfigKey)
-                    ? "SharingCore"
-                    : options?.DBConfigKey;
-
-
-                var dbConfigs = configuration.GetSection(configName)?.Get<SharingCoreDbConfig>();
-
-                if (dbConfigs == null)
-                {
-                    var sharingCoreDbConfigString = configuration[configName] ?? "";
-                    dbConfigs = JsonConvert.DeserializeObject<SharingCoreDbConfig>(sharingCoreDbConfigString);
-                    if (dbConfigs == null || !dbConfigs.DatabaseInfo.Any())
-                    {
-                        throw new Exception(@"请检查配置文件中配置信息");
-                    }
-                }
-
-                //兼容自定义数据库配置
-                if (options?.CustomDbConfigs != null)
-                {
-                    dbConfigs.DatabaseInfo ??= new List<DatabaseInfo>();
-                    dbConfigs.DatabaseInfo.AddRange(options?.CustomDbConfigs);
-                }
+                var dbConfigs = InitConfiguration(configuration, options);
 
                 //连接放入对象管理器
                 foreach (var item in dbConfigs.DatabaseInfo)
@@ -187,6 +72,7 @@ namespace SharingCore.Assemble
                         }
                         catch
                         {
+                            // ignored
                         }
                     }
 
@@ -221,37 +107,13 @@ namespace SharingCore.Assemble
                             //配置读写分离
                             freeSqlBuild.UseSlave(item.Slaves.ToArray());
                         }
-                        //FreeSqlBuilder扩展
-                        var exist = options.FreeSqlBuildersInject.TryGetValue(item.Key, out var value);
-                        if (exist)
-                        {
-                            freeSqlBuild = value?.Invoke(freeSqlBuild);
-                        }
+
+                        //配置FreeSqlBuilder
+                        InjectFreeSqlBuilder(options, ref freeSqlBuild, item.Key);
 
                         //开始注册
                         var freeSql = freeSqlBuild.Build();
-                        //全局过滤器
-                        if (filterFunc != null)
-                        {
-                            freeSql = filterFunc(freeSql, item.Key);
-                        }
 
-                        //定义过滤器，重写异常
-                        //freeSql.Aop.CommandAfter += (sender, args) =>
-                        //{
-                        //    try
-                        //    {
-                        //        if (args.Exception != null)
-                        //        {
-                        //            throw args.Exception;
-                        //        }
-                        //    }
-                        //    catch (Exception e)
-                        //    {
-                        //        Console.WriteLine($"【{item.Key}】发生异常：{e}");
-                        //        throw e;
-                        //    }
-                        //};
                         //监控日志，拼接字符串
                         freeSql.Aop.CurdAfter += (sender, args) =>
                         {
@@ -260,6 +122,10 @@ namespace SharingCore.Assemble
                                 CurdAfterLog.CurrentLog.Value += $"{{\"{item.Key}\":\"{args.Sql}\"}}*t-t*";
                             }
                         };
+
+                        //配置过滤器
+                        InjectFreeSqlFilter(options, ref freeSql, item.Key);
+
                         return freeSql;
                     });
                 }
@@ -267,6 +133,114 @@ namespace SharingCore.Assemble
             catch (Exception e)
             {
                 throw e;
+            }
+        }
+
+
+        /// <summary>
+        /// 初始化配置
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="options"></param>
+        /// <param name=""></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private static SharingCoreDbConfig InitConfiguration(IConfiguration configuration, SharingCoreOptions? options)
+        {
+            //获取到Apollo统一配置中心的数据信息
+            //初始化数据库对象，支持配置文件和自定义
+            var configName = string.IsNullOrWhiteSpace(options?.DBConfigKey)
+                ? "SharingCore"
+                : options?.DBConfigKey;
+
+
+            var dbConfigs = configuration.GetSection(configName)?.Get<SharingCoreDbConfig>();
+
+            if (dbConfigs == null)
+            {
+                var sharingCoreDbConfigString = configuration[configName] ?? "";
+                dbConfigs = JsonConvert.DeserializeObject<SharingCoreDbConfig>(sharingCoreDbConfigString);
+                if (dbConfigs == null || !dbConfigs.DatabaseInfo.Any())
+                {
+                    throw new Exception(@"请检查配置文件中配置信息");
+                }
+            }
+
+            //兼容自定义数据库配置
+            if (options?.CustomDatabaseInfo != null)
+            {
+                dbConfigs.DatabaseInfo ??= new List<DatabaseInfo>();
+                dbConfigs.DatabaseInfo.AddRange(options?.CustomDatabaseInfo);
+            }
+
+            return dbConfigs;
+        }
+
+
+        /// <summary>
+        ///  对FreeSqlBuilder个性化配置
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="freeSqlBuild"></param>
+        /// <param name="dbKey"></param>
+        private static void InjectFreeSqlBuilder(SharingCoreOptions options, ref FreeSqlBuilder freeSqlBuild,
+            string dbKey)
+        {
+            var flag = true;
+            if (options.CustomDatabaseSettings != null)
+            {
+                var exist = options.CustomDatabaseSettings.TryGetValue(dbKey, out var value);
+                if (exist && value != null && value.FreeSqlBuilderInject != null)
+                {
+                    freeSqlBuild = value.FreeSqlBuilderInject.Invoke(freeSqlBuild);
+                    flag = false;
+                }
+            }
+
+            if (flag)
+            {
+                //FreeSqlBuilder扩展
+                if (options.CustomAllDatabaseSettings != null)
+                {
+                    if (options.CustomAllDatabaseSettings.FreeSqlBuilderInject != null)
+                    {
+                        freeSqlBuild = options.CustomAllDatabaseSettings.FreeSqlBuilderInject.Invoke(freeSqlBuild);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        ///  配置过滤器
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="db"></param>
+        /// <param name="dbKey"></param>
+        private static void InjectFreeSqlFilter(SharingCoreOptions options, ref IFreeSql db,
+            string dbKey)
+        {
+            var flag = true;
+            if (options?.CustomDatabaseSettings != null)
+            {
+                var exist = options.CustomDatabaseSettings.TryGetValue(dbKey, out var value);
+                if (exist && value != null && value.FreeSqlFilterExpression != null)
+                {
+                    db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", value.FreeSqlFilterExpression);
+                    flag = false;
+                }
+            }
+
+            if (flag)
+            {
+                //FreeSqlBuilder扩展
+                if (options.CustomAllDatabaseSettings != null)
+                {
+                    if (options.CustomAllDatabaseSettings.FreeSqlFilterExpression != null)
+                    {
+                        db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}",
+                            options.CustomAllDatabaseSettings.FreeSqlFilterExpression);
+                    }
+                }
             }
         }
     }

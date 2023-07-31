@@ -1,12 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using SharingCore.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Reflection;
-using FreeSql;
 using SharingCore.Assemble;
 using SharingCore.Assemble.Model;
+using SharingCore.Common;
+using System;
 
 namespace SharingCore.Extensions
 {
@@ -30,43 +26,6 @@ namespace SharingCore.Extensions
             return service;
         }
 
-        /// <summary>
-        /// 初始化数据库配置
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="filter">全局过滤器，全库统一</param>
-        /// <param name="options">自定义配置</param>
-        /// <remarks>数据库配置：[{"Key":"xxxx","ConnectString":"xxxxx","DataType":"SqlServer","Slaves":["ConnectString","ConnectString","ConnectString"]}]</remarks>
-        /// <returns></returns>
-        public static IServiceCollection AddSharingCore<T>(this IServiceCollection service,
-            Expression<Func<T, bool>> filter, Action<SharingCoreOptions> options)
-        {
-            var configuration = SharingCoreUtils.Configuration;
-            var option = new SharingCoreOptions();
-            options?.Invoke(option);
-            SharingCoreUtils.Options = option;
-            IdleBusProvider.InitIdleBus(configuration, filter, option);
-            return service;
-        }
-
-        /// <summary>
-        /// 初始化数据库配置
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="filters">全局过滤器，不同库不同过滤器，字典中设置Key为： FreeSqlFilterType.Communal 作用于所有库的过滤器</param>
-        /// <param name="options">自定义配置</param>
-        /// <remarks>数据库配置：[{"Key":"xxxx","ConnectString":"xxxxx","DataType":"SqlServer","Slaves":["ConnectString","ConnectString","ConnectString"]}]</remarks>
-        /// <returns></returns>
-        public static IServiceCollection AddSharingCore<T>(this IServiceCollection service,
-            Dictionary<string, Expression<Func<T, bool>>> filters, Action<SharingCoreOptions> options)
-        {
-            var configuration = SharingCoreUtils.Configuration;
-            var option = new SharingCoreOptions();
-            options?.Invoke(option);
-            SharingCoreUtils.Options = option;
-            IdleBusProvider.InitIdleBus(configuration, filters, option);
-            return service;
-        }
 
         /// <summary>
         /// 直接通过数据库标识获取FreeSql对象
@@ -158,37 +117,5 @@ namespace SharingCore.Extensions
         }
     }
 
-    public class SharingCoreOptions
-    {
-        /// <summary>
-        /// 配置文件中数据库信息的KEY
-        /// </summary>
-        public string? DBConfigKey { get; set; } = string.Empty;
-
-        /// <summary>
-        /// 空闲过期时间
-        /// </summary>
-        public TimeSpan IdleTimeout { get; set; } = TimeSpan.FromHours(1);
-
-        /// <summary>
-        /// 自定义的数据库信息
-        /// </summary>
-        public List<DatabaseInfo>? CustomDbConfigs { get; set; } = null;
-
-        /// <summary>
-        /// 是否根据SharingCoreDbs中的扩展方法按需加载数据库
-        /// </summary>
-        public bool DemandLoading { get; set; } = false;
-
-        /// <summary>
-        /// 父项目的Assembly，用于扫描SharingCoreDbs扩展方法
-        /// </summary>
-        public Assembly? BaseReferenceAssembly { get; set; } = null;
-
-        /// <summary>
-        /// 对不同库的FreeSqlBuilder进行扩展注入
-        /// </summary>
-        public Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>? FreeSqlBuildersInject =
-            new Dictionary<string, Func<FreeSqlBuilder, FreeSqlBuilder>>();
-    }
+ 
 }

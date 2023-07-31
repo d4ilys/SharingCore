@@ -18,7 +18,7 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 *.vshistory
-
+*.idea
 # Mono auto generated files
 mono_crash.*
 

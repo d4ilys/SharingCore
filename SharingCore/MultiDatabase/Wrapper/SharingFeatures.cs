@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using SharingCore.Assemble.Model;
+﻿using SharingCore.Assemble.Model;
 using SharingCore.MultiDatabase.Model;
 using SharingCore.MultiDatabase.NoQuery;
 using SharingCore.MultiDatabase.Query;
 using SharingCore.MultiDatabase.Transcation;
-using SharingCore.MultiDatabase.Wrapper;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SharingCore.MultiDatabase.Wrapper
 {
@@ -29,7 +25,8 @@ namespace SharingCore.MultiDatabase.Wrapper
             var local = new AsyncLocal<DistributedTransaction>
             {
                 Value = new DistributedTransaction(dbWarps)
-            };
+            }; 
+
             return local.Value;
         }
         /// <summary>
