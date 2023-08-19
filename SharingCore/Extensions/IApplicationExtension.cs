@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using SharingCore.Assemble;
 using Microsoft.AspNetCore.Builder;
+using SharingCore.Context;
 
 namespace SharingCore.Extensions
 {
@@ -19,7 +20,7 @@ namespace SharingCore.Extensions
             var tenant = func?.Invoke();
             //配置全局租户
             if (tenant != null)
-                DbWarpFactory.SetTenant(tenant);
+                TenantContext.SetTenant(tenant);
             return builder;
         }
     }

@@ -1,5 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace SharingCore.Common
@@ -14,6 +16,10 @@ namespace SharingCore.Common
         {
             // 存储根服务
             SharingCoreUtils.Services = host.Services;
+
+            //配置
+            SharingCoreUtils.Configuration = SharingCoreUtils.Services.GetService<IConfiguration>();
+
         }
 
         /// <summary>

@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using SharingCore.Assemble;
+using System.Xml.Linq;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using SharingCore.Context;
 
 namespace SharingCore.Common
 {
@@ -46,11 +49,6 @@ namespace SharingCore.Common
             }
         }
 
-        /// <summary>
-        /// 通过SharingCoreDbs中的扩展方法特性获取分库对象
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
         internal static DateTimeSeparateImpl? TryGetDateTimeSeparate(string name)
         {
             try
@@ -63,6 +61,41 @@ namespace SharingCore.Common
             }
         }
 
+        internal static IEnumerable<string> GetDbNamesByColumnValueRange(string name, string tenant,
+            object columnValue1, object? columnValue2 = null)
+        {
+            List<string> dbList = new List<string>();
+            if (columnValue2 != null)
+            {
+                dbList.AddRange(TryGetDateTimeSeparate(name).GetDbNamesByColumnValueRange(columnValue1, columnValue2));
+            }
+            else
+            {
+                dbList.Add(TryGetDateTimeSeparate(name).GetDbNameByColumnValue(columnValue1));
+            }
+            if (!string.IsNullOrWhiteSpace(tenant))
+            {
+                for (var i = 0; i < dbList.Count; i++)
+                {
+                    var db = dbList[i];
+                    dbList[i] = $"{db}_{tenant}";
+                }
+            }
+            else
+            {
+                var overallTenantValue = TenantContext.GetTenant();
+                if (!string.IsNullOrWhiteSpace(overallTenantValue))
+                {
+                    for (var i = 0; i < dbList.Count; i++)
+                    {
+                        var db = dbList[i];
+                        dbList[i] = $"{db}_{overallTenantValue}";
+                    }
+                }
+            }
+
+            return dbList;
+        }
 
         static void GetExtensionMethods(IEnumerable<Assembly> assemblys, Type extendedType)
         {
@@ -98,7 +131,7 @@ namespace SharingCore.Common
                             dbInfoByAttribute.DateTimeSeparate = attribute.ParseSeparate();
                         }
                     }
-                 
+
                     dbInfosCache.Add(dbInfoByAttribute);
                 }
             }
@@ -152,6 +185,7 @@ namespace SharingCore.Common
             {
                 entitiesFullName = new List<string>();
             }
+
             foreach (Type type in Assembly.GetAssembly(typeof(IEntity)).GetExportedTypes())
             foreach (var fullname in entitiesFullName)
                 if (type.FullName.StartsWith(fullname) && type.IsClass)
@@ -159,7 +193,6 @@ namespace SharingCore.Common
 
             return tableAssembies.ToArray();
         }
-
     }
 
     internal class DbInfoByAttribute

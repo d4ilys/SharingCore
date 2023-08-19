@@ -45,28 +45,23 @@ namespace WorkerService
 
                         #region 所有数据库自定义配置
 
-                        var cds = new CustomDatabaseSettings();
                         //设置所有库的过滤器
-                        cds.FreeSqlFilter<FreeSqlFilter>(f => f.isDelete == 0);
+                        options.CustomAllDatabaseSettings.FreeSqlFilter<FreeSqlFilter>(f => f.isDelete == 0);
                         //FreeSqlBuilder时候每个库可以扩展
-                        cds.FreeSqlBuilderInject = builder =>
+                        options.CustomAllDatabaseSettings.FreeSqlBuilderInject = builder =>
                             builder.UseQuestDbRestAPI("192.168.0.1:9001", "admin", "123");
-                        options.CustomAllDatabaseSettings = cds;
 
                         #endregion
 
                         #region 单个数据库自定义配置
 
-                        var orderCustomDatabaseSettings = new CustomDatabaseSettings();
+                        var orderCustomDatabaseSettings = new DatabaseOption();
                         //设置所有库的过滤器
                         orderCustomDatabaseSettings.FreeSqlFilter<FreeSqlFilter>(f => f.isDelete == 0);
                         //FreeSqlBuilder时候每个库可以扩展
                         orderCustomDatabaseSettings.FreeSqlBuilderInject = builder =>
                             builder.UseNoneCommandParameter(false);
-                        options.CustomDatabaseSettings = new Dictionary<string, CustomDatabaseSettings>
-                        {
-                            { "order", orderCustomDatabaseSettings }  //对order库单独设置，优先级高于所对所有库的设置
-                        };
+                        options.CustomDatabaseSettings.Add("order", orderCustomDatabaseSettings);
 
                         #endregion
                     });

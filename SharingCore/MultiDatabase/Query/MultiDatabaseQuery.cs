@@ -33,10 +33,10 @@ namespace SharingCore.MultiDatabase.Query
                 //委托初始化参数
                 QueryParam queryParam = new QueryParam();
                 queryParamAction(queryParam);
-                //根据日期范围获取数据库名称
-                var separate = SharingCoreUtils.TryGetDateTimeSeparate(queryParam.DbName);
-                var dbNamesByTimeRange =
-                    separate?.GetDbNamesByColumnValueRange(queryParam.StartTime, queryParam.EndTime).Reverse();
+                //根据日期范围获取数据库名称.
+                var dbNamesByTimeRange = SharingCoreUtils.GetDbNamesByColumnValueRange(queryParam.DbName, "", queryParam.StartTime,
+                    queryParam.EndTime).Reverse();
+
                 //记录第一次查询的页数
                 long size = 0;
                 //偏移量
@@ -299,9 +299,9 @@ namespace SharingCore.MultiDatabase.Query
             queryParamAction(queryParam);
 
             //根据日期范围获取数据库名称
-            var separate = SharingCoreUtils.TryGetDateTimeSeparate(queryParam.DbName);
             var dbNamesByTimeRange =
-                separate?.GetDbNamesByColumnValueRange(queryParam.StartTime, queryParam.EndTime);
+                SharingCoreUtils.GetDbNamesByColumnValueRange(queryParam.DbName, "", queryParam.StartTime,
+                    queryParam.EndTime);
 
             TaskFactory taskFactory = new TaskFactory();
             var _taskList = new List<Task<T>>();

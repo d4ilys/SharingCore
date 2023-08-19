@@ -50,41 +50,53 @@ namespace SharingCore.MultiDatabase.NoQuery
                 var dbWarpList = new List<DbWarp>();
                 foreach (var year in yearArray)
                 {
-                    var warp = queryParam.DbName.GetDbWarp(year.Year.ToString(),queryParam.Tenant);
+                    var warp = queryParam.DbName.GetDbWarp(year.Year.ToString(), queryParam.Tenant);
                     dbWarpList.Add(warp);
                 }
-
-                using (var tran = SharingFeatures.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
+                //如果需要跨库则走跨库事务
+                if (dbWarpList.Count > 1)
                 {
-                    //绑定事件，用于事务补偿
-                    tran.OnCommitFail += OnCommitFail;
-                    try
+                    using (var tran = SharingFeatures.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
                     {
-                        //开始事务
-                        tran.BeginTran();
-                        //向主库添加日志，这个是有事务的
-                        var log = new multi_transaction_log()
+                        //绑定事件，用于事务补偿
+                        tran.OnCommitFail += OnCommitFail;
+                        try
                         {
-                            content = $"跨库执行事务的sql",
-                            exec_sql = ""
-                        };
-                        //多库操作，传递事务
-                        foreach (var dbWarp in dbWarpList)
-                        {
-                            func.Invoke(new NoQueryFuncParam()
+                            //开始事务
+                            tran.BeginTran();
+                            //向主库添加日志，这个是有事务的
+                            var log = new multi_transaction_log()
                             {
-                                Db = dbWarp.Instance,
-                                Transaction = tran.Transactions[dbWarp.Name]
-                            });
-                        }
+                                content = $"跨库执行事务的sql",
+                                exec_sql = ""
+                            };
+                            //多库操作，传递事务
+                            foreach (var dbWarp in dbWarpList)
+                            {
+                                func.Invoke(new NoQueryFuncParam()
+                                {
+                                    Db = dbWarp.Instance,
+                                    Transaction = tran.Transactions[dbWarp.Name]
+                                });
+                            }
 
-                        //提交事务并返回结果
-                        result = tran.Commit(log).Any();
+                            //提交事务并返回结果
+                            result = tran.Commit(log).Any();
+                        }
+                        catch (Exception e)
+                        {
+                            tran.Rellback();
+                        }
                     }
-                    catch (Exception e)
+                }
+                else
+                {
+                    var dbWarp = dbWarpList.FirstOrDefault();
+                    func.Invoke(new NoQueryFuncParam()
                     {
-                        tran.Rellback();
-                    }
+                        Db = dbWarp.Instance,
+                        Transaction = null
+                    });
                 }
             }
             catch (Exception e)

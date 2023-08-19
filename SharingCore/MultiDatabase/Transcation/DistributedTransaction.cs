@@ -2,12 +2,11 @@
 using Newtonsoft.Json;
 using SharingCore.Assemble.Model;
 using SharingCore.MultiDatabase.Model;
-using SharingCore.MultiDatabase.Utils;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using SharingCore.Context;
 
 namespace SharingCore.MultiDatabase.Transcation
 {
@@ -46,7 +45,7 @@ namespace SharingCore.MultiDatabase.Transcation
                 //获取事务对象
                 var transaction = dbConnection.Value.BeginTransaction();
                 Transactions.TryAdd(dbInstance.Name, transaction);
-                CurdAfterLog.CurrentLog.Value = "";
+                CurrentSqlLogContext.ClearSqlLog();
             }
         }
 
@@ -63,40 +62,9 @@ namespace SharingCore.MultiDatabase.Transcation
                 {
                     try
                     {
-                        #region 处理SQL日志
-
                         //获取到第一个
                         var firstTran = kv.Value;
-                        var tranSqlValue = CurdAfterLog.CurrentLog.Value;
-                        var tranSqlDictionary = new Dictionary<string, List<string>>();
-                        if (!string.IsNullOrWhiteSpace(tranSqlValue))
-                        {
-                            var tempArray = tranSqlValue.Split("*t-t*");
-                            if (tempArray.Any())
-                            {
-                                foreach (var s in tempArray)
-                                {
-                                    if (!string.IsNullOrWhiteSpace(s))
-                                    {
-                                        var temps = JsonConvert.DeserializeObject<Dictionary<string, string>>(s);
-                                        var tempKey = temps.First().Key;
-                                        var tempValue = temps.First().Value;
-                                        if (!tranSqlDictionary.ContainsKey(tempKey))
-                                        {
-                                            tranSqlDictionary.Add(tempKey, new List<string>() { tempValue });
-                                        }
-                                        else
-                                        {
-                                            tranSqlDictionary[tempKey].Add(tempValue);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        #endregion
-
-                        log.exec_sql = JsonConvert.SerializeObject(tranSqlDictionary);
+                        log.exec_sql = JsonConvert.SerializeObject(CurrentSqlLogContext.GetSqlLog());
                         var firstIFreeSql = _fsqlWarpCollect.First().Instance;
                         //如果不存日志表，先创建
                         if (!firstIFreeSql.DbFirst.ExistsTable(nameof(multi_transaction_log)))
@@ -185,8 +153,7 @@ namespace SharingCore.MultiDatabase.Transcation
                     OnCommitFail?.Invoke(logId.ToString(), _fsqlWarpCollect.First(), null); 
                 }
             }
-
-            CurdAfterLog.CurrentLog.Value = string.Empty;
+            CurrentSqlLogContext.ClearSqlLog();
             return resultDictionary;
         }
 
@@ -204,7 +171,7 @@ namespace SharingCore.MultiDatabase.Transcation
                 }
             }
 
-            CurdAfterLog.CurrentLog.Value = string.Empty;
+            CurrentSqlLogContext.ClearSqlLog();
         }
 
         //析构函数
@@ -228,7 +195,7 @@ namespace SharingCore.MultiDatabase.Transcation
                     }
                 }
 
-                CurdAfterLog.CurrentLog.Value = string.Empty;
+                CurrentSqlLogContext.ClearSqlLog();
                 _connections = null;
                 Transactions = null;
             }

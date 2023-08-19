@@ -3,6 +3,7 @@ using SharingCore.Assemble;
 using SharingCore.Assemble.Model;
 using SharingCore.Common;
 using System;
+using System.Linq;
 
 namespace SharingCore.Extensions
 {
@@ -23,6 +24,8 @@ namespace SharingCore.Extensions
             options?.Invoke(option);
             SharingCoreUtils.Options = option;
             IdleBusProvider.InitIdleBus(configuration, option);
+            service.AddHttpContextAccessor();
+            service.AddHostedService<GenericHostedService>();
             return service;
         }
 
@@ -76,8 +79,7 @@ namespace SharingCore.Extensions
         /// <returns></returns>
         public static DbWarp GetNowDbWarp(this string dbName, string tenant = "")
         {
-            var separate = SharingCoreUtils.TryGetDateTimeSeparate(dbName);
-            var name = separate?.GetDbNameByColumnValue(DateTime.Now);
+            var name = SharingCoreUtils.GetDbNamesByColumnValueRange(dbName, tenant, DateTime.Now).FirstOrDefault();
             return DbWarpFactory.GetByKey(name, tenant);
         }
 

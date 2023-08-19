@@ -1,6 +1,7 @@
 ﻿using System;
 using SharingCore.Assemble.Model;
 using System.Threading;
+using SharingCore.Context;
 
 namespace SharingCore.Assemble
 {
@@ -9,12 +10,7 @@ namespace SharingCore.Assemble
     /// </summary>
     public class DbWarpFactory
     {
-        private static AsyncLocal<string> OverallTenant = new AsyncLocal<string>();
-
-        public static void SetTenant(string tenant)
-        {
-            OverallTenant.Value = tenant;
-        }
+       
 
         /// <summary>
         /// 根据条件获取对应的数据库实例，支持多租户
@@ -71,17 +67,18 @@ namespace SharingCore.Assemble
         {
             //这里拿到了数据库配置中的key
             var key = $"{ident}";
+
+            if (!string.IsNullOrWhiteSpace(separateDbIdent))
+                key += $"_{separateDbIdent}";
             if (!string.IsNullOrWhiteSpace(tenant))
             {
                 key += $"_{tenant}";
             }
-            else if (!string.IsNullOrWhiteSpace(OverallTenant.Value))
+            else if (!string.IsNullOrWhiteSpace(TenantContext.GetTenant()))
             {
-                key += $"_{OverallTenant.Value}";
+                key += $"_{TenantContext.GetTenant()}";
             }
 
-            if (!string.IsNullOrWhiteSpace(separateDbIdent))
-                key += $"_{separateDbIdent}";
             return key;
         }
 

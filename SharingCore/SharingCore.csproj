@@ -6,7 +6,7 @@
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	  <Authors>Daily</Authors>
-	  <Version>1.1.1</Version>
+	  <Version>1.1.2</Version>
 	  <Description>基于FreeSql实现 跨库分页查询、分表查询、分布式事务</Description>
 	  <PackageId>Daily.FreeSql.SharingCore</PackageId>
 	  <Product>Daily.FreeSql.SharingCore</Product>
@@ -51,8 +51,8 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FreeSql" Version="3.2.698" />
-		<PackageReference Include="FreeSql.Repository" Version="3.2.698" />
+		<PackageReference Include="FreeSql" Version="3.2.700" />
+		<PackageReference Include="FreeSql.Repository" Version="3.2.700" />
 		<PackageReference Include="IdleBus" Version="1.5.3" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>

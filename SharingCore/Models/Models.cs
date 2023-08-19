@@ -21,7 +21,7 @@ namespace SharingCore
         /// <summary>
         /// 自定义的数据库信息
         /// </summary>
-        public List<DatabaseInfo>? CustomDatabaseInfo { get; set; } = null;
+        public List<DatabaseInfo>? DatabaseInfoSource { get; set; } = null;
 
         /// <summary>
         /// 是否根据SharingCoreDbs中的扩展方法按需加载数据库
@@ -36,21 +36,26 @@ namespace SharingCore
         /// <summary>
         /// 对不同数据库定制化设置
         /// </summary>
-        public Dictionary<string, CustomDatabaseSettings>? CustomDatabaseSettings { get; set; } =
-            new Dictionary<string, CustomDatabaseSettings>();
+        public Dictionary<string, DatabaseOption>? DatabaseOptions { get; set; } =
+            new Dictionary<string, DatabaseOption>();
 
         /// <summary>
         /// 对所有库定制化设置，优先级低于单库设置
         /// </summary>
-        public CustomDatabaseSettings CustomAllDatabaseSettings { get; set; } = new CustomDatabaseSettings();
+        public DatabaseOption TogetherDatabaseOption { get; set; } = new DatabaseOption();
     }
 
-    public class CustomDatabaseSettings
+    public class DatabaseOption
     {
         /// <summary>
         /// 对FreeSqlBuilder扩展设置
         /// </summary>
         public Func<FreeSqlBuilder, FreeSqlBuilder>? FreeSqlBuilderInject { get; set; } = null;
+
+        /// <summary>
+        /// 使用Ado自带的连接池
+        /// </summary>
+        public bool UseAdoConnectionPool { get; set; } = false;
 
         internal dynamic? FreeSqlFilterExpression = null;
 
@@ -63,7 +68,5 @@ namespace SharingCore
         {
             FreeSqlFilterExpression = expression;
         }
-
-        
     }
 }

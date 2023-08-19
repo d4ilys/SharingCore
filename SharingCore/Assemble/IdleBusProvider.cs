@@ -4,10 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using SharingCore.Common;
-using SharingCore.MultiDatabase.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SharingCore.Context;
 
 namespace SharingCore.Assemble
 {
@@ -97,7 +97,7 @@ namespace SharingCore.Assemble
                                 Console.WriteLine(
                                     "------------------------------------------------------------------------------------------------------------");
                                 Console.WriteLine(
-                                    $"监听到SQL-{DateTime.Now:yyy-MM-dd HH:mm:ss}：{cmd.CommandText}{Environment.NewLine}");
+                                    $"{item.Key}：监听到SQL-{DateTime.Now:yyy-MM-dd HH:mm:ss}：{cmd.CommandText}{Environment.NewLine}");
                             });
                         }
 
@@ -119,7 +119,7 @@ namespace SharingCore.Assemble
                         {
                             if (args.CurdType != CurdType.Select)
                             {
-                                CurdAfterLog.CurrentLog.Value += $"{{\"{item.Key}\":\"{args.Sql}\"}}*t-t*";
+                                CurrentSqlLogContext.SetSqlLog(item.Key, args.Sql);
                             }
                         };
 
@@ -167,10 +167,10 @@ namespace SharingCore.Assemble
             }
 
             //兼容自定义数据库配置
-            if (options?.CustomDatabaseInfo != null)
+            if (options?.DatabaseInfoSource != null)
             {
                 dbConfigs.DatabaseInfo ??= new List<DatabaseInfo>();
-                dbConfigs.DatabaseInfo.AddRange(options?.CustomDatabaseInfo);
+                dbConfigs.DatabaseInfo.AddRange(options?.DatabaseInfoSource);
             }
 
             return dbConfigs;
@@ -187,12 +187,17 @@ namespace SharingCore.Assemble
             string dbKey)
         {
             var flag = true;
-            if (options.CustomDatabaseSettings != null)
+            if (options.DatabaseOptions != null)
             {
-                var exist = options.CustomDatabaseSettings.TryGetValue(dbKey, out var value);
+                var exist = options.DatabaseOptions.TryGetValue(dbKey, out var value);
                 if (exist && value != null && value.FreeSqlBuilderInject != null)
                 {
                     freeSqlBuild = value.FreeSqlBuilderInject.Invoke(freeSqlBuild);
+                    flag = false;
+                }
+                if (exist && value != null && value.UseAdoConnectionPool)
+                {
+                    freeSqlBuild.UseAdoConnectionPool(true);
                     flag = false;
                 }
             }
@@ -200,11 +205,15 @@ namespace SharingCore.Assemble
             if (flag)
             {
                 //FreeSqlBuilder扩展
-                if (options.CustomAllDatabaseSettings != null)
+                if (options.TogetherDatabaseOption != null)
                 {
-                    if (options.CustomAllDatabaseSettings.FreeSqlBuilderInject != null)
+                    if (options.TogetherDatabaseOption.FreeSqlBuilderInject != null)
                     {
-                        freeSqlBuild = options.CustomAllDatabaseSettings.FreeSqlBuilderInject.Invoke(freeSqlBuild);
+                        freeSqlBuild = options.TogetherDatabaseOption.FreeSqlBuilderInject.Invoke(freeSqlBuild);
+                    }
+                    if (options.TogetherDatabaseOption.UseAdoConnectionPool)
+                    {
+                        freeSqlBuild.UseAdoConnectionPool(true);
                     }
                 }
             }
@@ -220,9 +229,9 @@ namespace SharingCore.Assemble
             string dbKey)
         {
             var flag = true;
-            if (options?.CustomDatabaseSettings != null)
+            if (options?.DatabaseOptions != null)
             {
-                var exist = options.CustomDatabaseSettings.TryGetValue(dbKey, out var value);
+                var exist = options.DatabaseOptions.TryGetValue(dbKey, out var value);
                 if (exist && value != null && value.FreeSqlFilterExpression != null)
                 {
                     db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", value.FreeSqlFilterExpression);
@@ -233,12 +242,12 @@ namespace SharingCore.Assemble
             if (flag)
             {
                 //FreeSqlBuilder扩展
-                if (options.CustomAllDatabaseSettings != null)
+                if (options.TogetherDatabaseOption != null)
                 {
-                    if (options.CustomAllDatabaseSettings.FreeSqlFilterExpression != null)
+                    if (options.TogetherDatabaseOption.FreeSqlFilterExpression != null)
                     {
                         db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}",
-                            options.CustomAllDatabaseSettings.FreeSqlFilterExpression);
+                            options.TogetherDatabaseOption.FreeSqlFilterExpression);
                     }
                 }
             }
