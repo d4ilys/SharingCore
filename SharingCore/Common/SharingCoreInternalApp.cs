@@ -22,5 +22,10 @@ namespace SharingCore.Common
         /// 整体配置
         /// </summary>
         public static SharingCoreOptions Options { get; internal set; }
+
+        /// <summary>
+        /// 所有数据库配置
+        /// </summary>
+        public static SharingCoreDbConfig DatabaseConfig { get; internal set; }
     }
 }

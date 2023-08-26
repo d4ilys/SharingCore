@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SharingCore.Assemble;
 
 namespace SharingCore.Common
 {
@@ -19,6 +20,10 @@ namespace SharingCore.Common
 
             //配置
             SharingCoreUtils.Configuration = SharingCoreUtils.Services.GetService<IConfiguration>();
+
+            //初始化IdleBus
+            IdleBusProvider.InitIdleBus(SharingCoreUtils.Configuration, SharingCoreUtils.Options);
+
 
         }
 

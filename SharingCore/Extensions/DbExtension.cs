@@ -19,11 +19,9 @@ namespace SharingCore.Extensions
         public static IServiceCollection AddSharingCore(this IServiceCollection service,
             Action<SharingCoreOptions>? options = null)
         {
-            var configuration = SharingCoreUtils.Configuration;
             var option = new SharingCoreOptions();
             options?.Invoke(option);
             SharingCoreUtils.Options = option;
-            IdleBusProvider.InitIdleBus(configuration, option);
             service.AddHttpContextAccessor();
             service.AddHostedService<GenericHostedService>();
             return service;
@@ -41,6 +39,16 @@ namespace SharingCore.Extensions
         public static IFreeSql GetFreeSql(this string dbName, string separateDbIdent = "", string tenant = "")
         {
             return GetDbWarp(dbName, separateDbIdent, tenant).Instance;
+        }
+
+        /// <summary>
+        /// 直接通过数据库标识直接FreeSql对象
+        /// </summary>
+        /// <param name="dbName">数据库标识Key</param>
+        /// <returns></returns>
+        public static IFreeSql GetFreeSqlByKey(this string dbName)
+        {
+            return  IdleBusProvider.Instance.Get(dbName);
         }
 
         /// <summary>

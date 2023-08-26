@@ -7,14 +7,16 @@ using SharingCore.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using SharingCore.Context;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SharingCore.Assemble
 {
     /// <summary>
     /// 对象管理容器-IFeeSql实例提供者
     /// </summary>
-    public class IdleBusProvider
+    internal class IdleBusProvider
     {
         private static readonly object LockObject = new object();
         public static IdleBus<IFreeSql>? Instance = null;
@@ -90,15 +92,17 @@ namespace SharingCore.Assemble
                         var freeSqlBuild = new FreeSqlBuilder()
                             .UseConnectionString(DataTypeAdapter.GetDataType(item.DataType), item.ConnectString);
                         //是否显示日志
-                        if (dbConfigs.ShowSqlLog)
+                        if (options.ShowSqlLog)
                         {
-                            freeSqlBuild.UseNoneCommandParameter(true).UseMonitorCommand(cmd =>
+                            if (dbConfigs.ShowSqlLog)
                             {
-                                Console.WriteLine(
-                                    "------------------------------------------------------------------------------------------------------------");
-                                Console.WriteLine(
-                                    $"{item.Key}：监听到SQL-{DateTime.Now:yyy-MM-dd HH:mm:ss}：{cmd.CommandText}{Environment.NewLine}");
-                            });
+                                freeSqlBuild.UseNoneCommandParameter(true).UseMonitorCommand(cmd =>
+                                {
+                                    var logger = SharingCoreUtils.Services.GetService<ILogger<IdleBusProvider>>();
+                                    logger.LogInformation(
+                                        $"{item.Key}：监听到SQL-{DateTime.Now:yyy-MM-dd HH:mm:ss}：{cmd.CommandText}{Environment.NewLine}");
+                                });
+                            }
                         }
 
                         //判断是否配置了读写分离
@@ -173,6 +177,7 @@ namespace SharingCore.Assemble
                 dbConfigs.DatabaseInfo.AddRange(options?.DatabaseInfoSource);
             }
 
+            SharingCoreUtils.DatabaseConfig = dbConfigs;
             return dbConfigs;
         }
 
@@ -195,6 +200,7 @@ namespace SharingCore.Assemble
                     freeSqlBuild = value.FreeSqlBuilderInject.Invoke(freeSqlBuild);
                     flag = false;
                 }
+
                 if (exist && value != null && value.UseAdoConnectionPool)
                 {
                     freeSqlBuild.UseAdoConnectionPool(true);
@@ -211,6 +217,7 @@ namespace SharingCore.Assemble
                     {
                         freeSqlBuild = options.TogetherDatabaseOption.FreeSqlBuilderInject.Invoke(freeSqlBuild);
                     }
+
                     if (options.TogetherDatabaseOption.UseAdoConnectionPool)
                     {
                         freeSqlBuild.UseAdoConnectionPool(true);

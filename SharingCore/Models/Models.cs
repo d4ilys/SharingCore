@@ -29,6 +29,11 @@ namespace SharingCore
         public bool DemandLoading { get; set; } = false;
 
         /// <summary>
+        /// 是否显示日志，优先级高于配置文件
+        /// </summary>
+        public bool ShowSqlLog { get; set; } = true;
+
+        /// <summary>
         /// 父项目的Assembly，用于扫描SharingCoreDbs扩展方法
         /// </summary>
         public Assembly? BaseReferenceAssembly { get; set; } = null;

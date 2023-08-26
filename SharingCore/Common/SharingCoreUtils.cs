@@ -73,6 +73,7 @@ namespace SharingCore.Common
             {
                 dbList.Add(TryGetDateTimeSeparate(name).GetDbNameByColumnValue(columnValue1));
             }
+
             if (!string.IsNullOrWhiteSpace(tenant))
             {
                 for (var i = 0; i < dbList.Count; i++)
@@ -178,18 +179,12 @@ namespace SharingCore.Common
         /// <typeparam name="IEntity"></typeparam>
         /// <param name="entitiesFullName">根据需要调整 entitiesFullName 下的命名空间值</param>
         /// <returns></returns>
-        public static Type[] GetTypesByNameSpace<IEntity>(List<string>? entitiesFullName = null)
+        public static Type[] GetTypesByNameSpace<IEntity>()
         {
             List<Type> tableAssembies = new List<Type>();
-            if (entitiesFullName == null)
-            {
-                entitiesFullName = new List<string>();
-            }
 
             foreach (Type type in Assembly.GetAssembly(typeof(IEntity)).GetExportedTypes())
-            foreach (var fullname in entitiesFullName)
-                if (type.FullName.StartsWith(fullname) && type.IsClass)
-                    tableAssembies.Add(type);
+                tableAssembies.Add(type);
 
             return tableAssembies.ToArray();
         }
