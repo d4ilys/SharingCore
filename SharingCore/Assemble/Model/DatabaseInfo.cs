@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using FreeSql;
 
-namespace SharingCore
+namespace FreeSql.SharingCore
 {
     public class DatabaseInfo
     {

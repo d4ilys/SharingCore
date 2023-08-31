@@ -1,9 +1,7 @@
-﻿using System;
-using SharingCore.Assemble.Model;
-using System.Threading;
-using SharingCore.Context;
+﻿using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Context;
 
-namespace SharingCore.Assemble
+namespace FreeSql.SharingCore.Assemble
 {
     /// <summary>
     /// 数据库包装类工厂方法

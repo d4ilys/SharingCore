@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SharingCore.Assemble.Model
+namespace FreeSql.SharingCore.Assemble.Model
 {
     public class DbWarp
     {

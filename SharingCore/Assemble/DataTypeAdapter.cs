@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using FreeSql;
 
-namespace SharingCore.Assemble
+namespace FreeSql.SharingCore.Assemble
 {
     /// <summary>
     /// 数据库类型适配器

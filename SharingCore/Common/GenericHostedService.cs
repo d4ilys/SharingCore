@@ -1,11 +1,11 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SharingCore.Assemble;
+using System.Threading;
+using System.Threading.Tasks;
+using FreeSql.SharingCore.Assemble;
 
-namespace SharingCore.Common
+namespace FreeSql.SharingCore.Common
 {
     public class GenericHostedService : IHostedService
     {

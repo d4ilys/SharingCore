@@ -1,21 +1,13 @@
-﻿using System;
-using System.Collections;
+﻿using FreeSharding.SeparateDatabase;
+using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SharingCore.Assemble;
-using SharingCore.Assemble.Model;
-using SharingCore.Extensions;
-using SharingCore.MultiDatabase.Model;
-using SharingCore.MultiDatabase.Transcation;
-using SharingCore.MultiDatabase.Wrapper;
-using FreeSharding.SeparateDatabase;
-using FreeSql;
-using Newtonsoft.Json;
+using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Extensions;
+using FreeSql.SharingCore.MultiDatabase.Model;
+using FreeSql.SharingCore.MultiDatabase.Wrapper;
 
-namespace SharingCore.MultiDatabase.NoQuery
+namespace FreeSql.SharingCore.MultiDatabase.NoQuery
 {
     public class MultiDatabaseNoQuery
     {
@@ -56,7 +48,7 @@ namespace SharingCore.MultiDatabase.NoQuery
                 //如果需要跨库则走跨库事务
                 if (dbWarpList.Count > 1)
                 {
-                    using (var tran = SharingFeatures.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
+                    using (var tran = Wrapper.SharingCore.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
                     {
                         //绑定事件，用于事务补偿
                         tran.OnCommitFail += OnCommitFail;

@@ -1,9 +1,8 @@
 using FreeSql.DataAnnotations;
+using FreeSql.SharingCore.Context;
+using FreeSql.SharingCore.Extensions;
+using FreeSql.SharingCore.MultiDatabase.Wrapper;
 using Newtonsoft.Json;
-using SharingCore.Assemble;
-using SharingCore.Context;
-using SharingCore.Extensions;
-using SharingCore.MultiDatabase.Wrapper;
 using TSP.WokerServices.Base;
 
 namespace SeparateDatabaseTable
@@ -29,14 +28,14 @@ namespace SeparateDatabaseTable
         public async Task SeparateDatatableInitAsync()
         {
             //自动创建表
-            var list = await SharingFeatures.QueryAsync(query =>
+            var list = await SharingCore.QueryAsync(query =>
             {
                 query.Db.CodeFirst.SyncStructure<back_order>();
                 return new List<string>();
             }, query => query.Init(Dbs.Order(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
 
             //通过日期范围进行插入 
-            SharingFeatures.NoQuery<back_order>(noQuery =>
+            SharingCore.NoQuery<back_order>(noQuery =>
                 {
                     noQuery.Db.Insert(new back_order
                         {
@@ -59,7 +58,7 @@ namespace SeparateDatabaseTable
 
 
             //通过日期范围进行插入 
-            SharingFeatures.NoQuery<back_order>(noQuery =>
+            SharingCore.NoQuery<back_order>(noQuery =>
                 {
                     noQuery.Db.Insert(new back_order
                     {
@@ -84,7 +83,7 @@ namespace SeparateDatabaseTable
         public async Task SeparateDatatableAsync()
         {
             //根据时间分库查询
-            var list = await SharingFeatures.QueryAsync(query =>
+            var list = await SharingCore.QueryAsync(query =>
             {
                 var list = query.Db.Select<back_order>().ToList();
                 return list;

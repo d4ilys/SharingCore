@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SharingCore.MultiDatabase.Model
+namespace FreeSql.SharingCore.MultiDatabase.Model
 {
     public class QueryFuncParam
     {

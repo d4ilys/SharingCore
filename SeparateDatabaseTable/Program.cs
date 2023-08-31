@@ -1,4 +1,4 @@
-using SharingCore.Extensions;
+using FreeSql.SharingCore.Extensions;
 
 namespace SeparateDatabaseTable
 {

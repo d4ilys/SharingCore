@@ -2,7 +2,7 @@
 using System;
 using System.Numerics;
 
-namespace SharingCore.MultiDatabase.Model
+namespace FreeSql.SharingCore.MultiDatabase.Model
 {
     /// <summary>
     /// 记录事务执行的日志

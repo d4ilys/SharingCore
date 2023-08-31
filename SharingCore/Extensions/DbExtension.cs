@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using SharingCore.Assemble;
-using SharingCore.Assemble.Model;
-using SharingCore.Common;
+﻿using FreeSql.SharingCore.Assemble;
+using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Common;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 
-namespace SharingCore.Extensions
+namespace FreeSql.SharingCore.Extensions
 {
     public static class DbExtension
     {

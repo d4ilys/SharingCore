@@ -1,17 +1,16 @@
-﻿using FreeSql;
-using FreeSql.Aop;
+﻿using FreeSql.Aop;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using SharingCore.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Logging;
-using SharingCore.Context;
-using Microsoft.Extensions.DependencyInjection;
+using FreeSql.SharingCore.Common;
+using FreeSql.SharingCore.Context;
 
-namespace SharingCore.Assemble
+namespace FreeSql.SharingCore.Assemble
 {
     /// <summary>
     /// 对象管理容器-IFeeSql实例提供者

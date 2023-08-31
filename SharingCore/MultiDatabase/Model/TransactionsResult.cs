@@ -1,4 +1,4 @@
-﻿namespace SharingCore.MultiDatabase.Model
+﻿namespace FreeSql.SharingCore.MultiDatabase.Model
 {
     public class TransactionsResult
     {

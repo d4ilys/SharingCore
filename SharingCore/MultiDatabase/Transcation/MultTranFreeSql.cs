@@ -7,7 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Transactions;
 
-namespace SharingCore.MultiDatabase.Transcation
+namespace FreeSql.SharingCore.MultiDatabase.Transcation
 {
     public class DTranFreeSql
     {

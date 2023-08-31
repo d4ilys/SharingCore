@@ -1,15 +1,12 @@
-﻿using FreeSharding.SeparateDatabase;
-using Newtonsoft.Json;
-using SharingCore.Extensions;
+﻿using FreeSql.SharingCore.Assemble;
+using FreeSql.SharingCore.Common;
+using FreeSql.SharingCore.MultiDatabase.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SharingCore.Assemble;
-using SharingCore.MultiDatabase.Model;
-using SharingCore.Common;
 
-namespace SharingCore.MultiDatabase.Query
+namespace FreeSql.SharingCore.MultiDatabase.Query
 {
     public class MultiDatabaseQuery
     {

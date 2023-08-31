@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SharingCore.Common;
-using SharingCore.MultiDatabase.Wrapper;
+﻿using FreeSql.SharingCore.MultiDatabase.Wrapper;
 
 namespace TSP.WokerServices.Base
 {

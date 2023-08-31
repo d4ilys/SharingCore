@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace SharingCore.Common
+namespace FreeSql.SharingCore.Common
 {
     internal class FreeSqlFilterExpressionVisitor: ExpressionVisitor
     {

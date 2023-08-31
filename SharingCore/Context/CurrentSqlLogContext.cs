@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace SharingCore.Context
+namespace FreeSql.SharingCore.Context
 {
     internal class CurrentSqlLogContext
     {

@@ -4,8 +4,8 @@ using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-[assembly: HostingStartup(typeof(SharingCore.Common.DefaultInject))]
-namespace SharingCore.Common
+[assembly: HostingStartup(typeof(FreeSql.SharingCore.Common.DefaultInject))]
+namespace FreeSql.SharingCore.Common
 {
     internal class DefaultInject : IHostingStartup
     {

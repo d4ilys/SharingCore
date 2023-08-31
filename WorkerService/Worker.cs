@@ -1,8 +1,8 @@
+using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Extensions;
+using FreeSql.SharingCore.MultiDatabase.Model;
+using FreeSql.SharingCore.MultiDatabase.Wrapper;
 using Newtonsoft.Json;
-using SharingCore.Assemble.Model;
-using SharingCore.Extensions;
-using SharingCore.MultiDatabase.Model;
-using SharingCore.MultiDatabase.Wrapper;
 using TSP.WokerServices.Base;
 using WorkerService.Model;
 
@@ -48,7 +48,7 @@ namespace WorkerService
             Console.WriteLine(executeAffrows);
 
 //通过日期范围进行插入 
-            SharingFeatures.NoQuery<order>(noQuery =>
+            SharingCore.NoQuery<order>(noQuery =>
                 {
                     noQuery.Db.Insert(new order
                         {
@@ -64,7 +64,7 @@ namespace WorkerService
                 //事务补偿
                 (logId, dbWarp, exception) => { });
 
-            SharingFeatures.NoQuery<order>(noQuery =>
+            SharingCore.NoQuery<order>(noQuery =>
                 {
                     noQuery.Db.Insert(new order
                         {
@@ -88,7 +88,7 @@ namespace WorkerService
 
         public void QueryPageListTest(int page)
         {
-            var result = SharingFeatures.QueryPageList(query =>
+            var result = SharingCore.QueryPageList(query =>
                 {
                     var result = query.Db.Select<order>()
                         .PageCore(query, out var count)
@@ -104,7 +104,7 @@ namespace WorkerService
 
         public async Task QueryAllTest()
         {
-            var list = await SharingFeatures.QueryAsync(query =>
+            var list = await SharingCore.QueryAsync(query =>
             {
                 var list = query.Db.Select<order>()
                     .Where(o => o.order_time.Value.BetweenEnd(query.StartTime, query.EndTime)).ToList();
@@ -116,7 +116,7 @@ namespace WorkerService
 
         public async Task QueryToOneTest()
         {
-            var list = await SharingFeatures.QueryToOneAsync(query =>
+            var list = await SharingCore.QueryToOneAsync(query =>
             {
                 var list = query.Db.Select<order>()
                     .Where(o => o.id == 199).ToList();
@@ -130,7 +130,7 @@ namespace WorkerService
         {
             var businessWarp = Dbs.Business().GetNowDbWarp();
             var basicsWarp = Dbs.Basics().GetDbWarp();
-            using var tran = SharingFeatures.Transaction(businessWarp, basicsWarp);
+            using var tran = SharingCore.Transaction(businessWarp, basicsWarp);
             tran.OnCommitFail += TransactionCompensation;
             try
             {

@@ -1,5 +1,5 @@
 using FreeSql;
-using SharingCore.Extensions;
+using FreeSql.SharingCore.Extensions;
 using TSP.WokerServices.Base;
 using TSP.WokerServices.Base.TSPAdpater;
 
@@ -10,7 +10,6 @@ namespace WorkerService
         public static void Main(string[] args)
         {
             IHost host = Host.CreateDefaultBuilder(args)
-                .InjectSharingCore()
                 .ConfigureServices(services =>
                 {
                     services.AddHttpContextAccessor();
@@ -46,9 +45,9 @@ namespace WorkerService
                         #region 所有数据库自定义配置
 
                         //设置所有库的过滤器
-                        options.CustomAllDatabaseSettings.FreeSqlFilter<FreeSqlFilter>(f => f.isDelete == 0);
+                        options.TogetherDatabaseOption.FreeSqlFilter<FreeSqlFilter>(f => f.isDelete == 0);
                         //FreeSqlBuilder时候每个库可以扩展
-                        options.CustomAllDatabaseSettings.FreeSqlBuilderInject = builder =>
+                        options.TogetherDatabaseOption.FreeSqlBuilderInject = builder =>
                             builder.UseQuestDbRestAPI("192.168.0.1:9001", "admin", "123");
 
                         #endregion
@@ -61,7 +60,7 @@ namespace WorkerService
                         //FreeSqlBuilder时候每个库可以扩展
                         orderCustomDatabaseSettings.FreeSqlBuilderInject = builder =>
                             builder.UseNoneCommandParameter(false);
-                        options.CustomDatabaseSettings.Add("order", orderCustomDatabaseSettings);
+                        options.DatabaseOptions.Add("order", orderCustomDatabaseSettings);
 
                         #endregion
                     });

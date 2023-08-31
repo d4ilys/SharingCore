@@ -1,17 +1,9 @@
-﻿using FreeSql.DataAnnotations;
-using FreeSql.Internal.Model;
-using FreeSql.Internal;
-using FreeSql;
-using System;
-using System.Collections.Concurrent;
+﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using SharingCore.Assemble.Model;
 
-namespace SharingCore
+namespace FreeSql.SharingCore
 {
     /// <summary>
     /// 分库标识

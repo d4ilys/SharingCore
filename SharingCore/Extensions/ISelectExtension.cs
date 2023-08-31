@@ -1,11 +1,9 @@
-﻿using System;
+﻿using FreeSql.SharingCore.MultiDatabase.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
-using SharingCore.MultiDatabase.Model;
-using FreeSql;
 
-namespace SharingCore.Extensions
+namespace FreeSql.SharingCore.Extensions
 {
     public static class ISelectExtension
     {

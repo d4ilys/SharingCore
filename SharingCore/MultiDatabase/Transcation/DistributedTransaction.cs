@@ -1,14 +1,14 @@
 ﻿using FreeSql.Internal.ObjectPool;
 using Newtonsoft.Json;
-using SharingCore.Assemble.Model;
-using SharingCore.MultiDatabase.Model;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using SharingCore.Context;
+using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Context;
+using FreeSql.SharingCore.MultiDatabase.Model;
 
-namespace SharingCore.MultiDatabase.Transcation
+namespace FreeSql.SharingCore.MultiDatabase.Transcation
 {
     public class DistributedTransaction : IDisposable
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace SharingCore
+namespace FreeSql.SharingCore
 {
     public class SharingCoreOptions
     {

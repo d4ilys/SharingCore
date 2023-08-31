@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
-namespace SharingCore.Context
+namespace FreeSql.SharingCore.Context
 {
     public class TenantContext
     {

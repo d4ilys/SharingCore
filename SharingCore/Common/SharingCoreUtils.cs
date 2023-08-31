@@ -1,15 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using SharingCore.MultiDatabase.Wrapper;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using SharingCore.Assemble;
-using System.Xml.Linq;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using SharingCore.Context;
+using FreeSql.SharingCore.Assemble;
+using FreeSql.SharingCore.Context;
+using FreeSql.SharingCore.MultiDatabase.Wrapper;
 
-namespace SharingCore.Common
+namespace FreeSql.SharingCore.Common
 {
     /// <summary>
     /// SharingCore工具类

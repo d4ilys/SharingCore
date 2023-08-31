@@ -1,2 +1,2 @@
-﻿global using static SharingCore.MultiDatabase.Wrapper.SharingFeatures;
-global using SharingCore;
+﻿global using static FreeSql.SharingCore.MultiDatabase.Wrapper.SharingCore;
+global using FreeSql.SharingCore;

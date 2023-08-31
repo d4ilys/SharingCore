@@ -1,13 +1,9 @@
-﻿using System;
+﻿using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.MultiDatabase.Model;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Transactions;
-using SharingCore.Assemble.Model;
-using SharingCore.MultiDatabase.Model;
 
-namespace SharingCore.MultiDatabase.Transcation
+namespace FreeSql.SharingCore.MultiDatabase.Transcation
 {
     public class MultiDatabaseTransaction2 : IDisposable
     {

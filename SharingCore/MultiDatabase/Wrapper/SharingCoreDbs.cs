@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SharingCore.MultiDatabase.Wrapper
+namespace FreeSql.SharingCore.MultiDatabase.Wrapper
 {
     /// <summary>
     /// 数据库合集

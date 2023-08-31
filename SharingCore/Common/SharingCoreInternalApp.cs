@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using SharingCore.Extensions;
 
-namespace SharingCore.Common
+namespace FreeSql.SharingCore.Common
 {
     public partial class SharingCoreUtils
     {

@@ -124,7 +124,6 @@ var builder = WebApplication.CreateBuilder(args).InjectSharingCore(); //注入
 //简单方式
 services.AddSharingCore();
 //复杂构建
-//复杂构建
 services.AddSharingCore(options =>
 {
     options.DBConfigKey = "CustomDbConfig"; //指定配置文件中的KEY，如不指定 默认为 SharingCore
@@ -156,14 +155,6 @@ services.AddSharingCore(options =>
 ~~~
 
 * **按需加载：例如 配置文件中有30个数据库但是不同的工作服务中会用到不同的数据库 并不想全都加载，这时候可以每一个服务自定义SharingCoreDbs扩展方法 来控制加载数据库，SharingCore会根据扩展方法进行加载数据库**
-
-> ASP.NET Core 3.1/5.0 Program.cs中
-
-~~~C#
- public static IHostBuilder CreateHostBuilder(string[] args) =>
-     Host.CreateDefaultBuilder(args)
-     .InjectSharingCore()  //注入
-~~~
 
 #### 3.获取IFreeSql操作对象
 
@@ -244,7 +235,7 @@ SharingFeatures.NoQuery<order>(noQuery =>
 #### 7.跨库并行查询（不分页）
 
 ~~~C#
-var list = await SharingFeatures.QueryAsync(query =>
+var list = await SharingCore.QueryAsync(query =>
 {
       var list = query.Db.Select<order>()
       .Where(o => o.order_time.Value.BetweenEnd(query.StartTime, query.EndTime)).ToList();
@@ -256,7 +247,7 @@ Console.WriteLine(list.Count);
 #### 8.跨库ToOne查询
 
 ~~~C# 
-var list = await SharingFeatures.QueryToOneAsync(query =>
+var list = await SharingCore.QueryToOneAsync(query =>
 {
       var list = query.Db.Select<order>()
       .Where(o => o.id == 199).ToList();
@@ -268,7 +259,7 @@ Console.WriteLine(list.Count);
 #### 9.跨库Any查询
 
 ~~~C# 
-var list = await SharingFeatures.QueryAnyAsync(func =>
+var list = await SharingCore.QueryAnyAsync(func =>
 {
     var list = func.Db.Select<vehicleLudan>()
         .Where(l => l.dateLudan.Value.BetweenEnd(func.StartTime, func.EndTime))
@@ -283,7 +274,7 @@ var list = await SharingFeatures.QueryAnyAsync(func =>
 ~~~C#
 var businessWarp = Dbs.Business().GetNowDbWarp();
 var basicsWarp = Dbs.Basics().GetDbWarp();
-using (var tran = SharingFeatures.Transaction(businessWarp, basicsWarp))
+using (var tran = SharingCore.Transaction(businessWarp, basicsWarp))
 {
     //监听到有提交失败的库时，启动事务补偿
     tran.OnCommitFail += TransactionCompensation;

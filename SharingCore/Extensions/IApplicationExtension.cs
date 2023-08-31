@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SharingCore.Assemble;
-using Microsoft.AspNetCore.Builder;
-using SharingCore.Context;
+﻿using Microsoft.AspNetCore.Builder;
+using System;
+using FreeSql.SharingCore.Context;
 
-namespace SharingCore.Extensions
+namespace FreeSql.SharingCore.Extensions
 {
     public static class IApplicationBuilderExtension
     {
