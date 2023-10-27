@@ -31,7 +31,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Model
         /// <summary>
         /// 执行SQL
         /// </summary>
-        [Column(StringLength = 1000)]
+        [Column(StringLength = -1)]
         public string? exec_sql
         {
             get; set;

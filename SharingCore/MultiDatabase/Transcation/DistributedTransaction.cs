@@ -4,9 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using FreeSql.SharingCore.Assemble;
 using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Common;
 using FreeSql.SharingCore.Context;
 using FreeSql.SharingCore.MultiDatabase.Model;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace FreeSql.SharingCore.MultiDatabase.Transcation
 {
@@ -90,7 +94,8 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                             Successful = false
                         });
                         Rellback();
-                        Console.WriteLine("第一个库发生异常，其他全部回滚......");
+                        var logger = SharingCoreUtils.Services.GetService<ILogger<DistributedTransaction>>();
+                        if (logger != null) logger.LogInformation($"第一个库发生异常，其他全部回滚.");
                         break;
                     }
                     finally
@@ -104,13 +109,6 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                     // 这里从第二个开始提交
                     try
                     {
-                        //TODO Test 
-                        //if (new Random().Next(2) == 1)
-                        //{
-                        //    Console.WriteLine($"{kv.Key}，由于网络宕机出现错误 请进行事务补偿.");
-                        //    throw new Exception($"{kv.Key}，由于网络宕机出现错误 请进行事务补偿.");
-                        //}
-
                         kv.Value.Commit();
 
                         //Commit没有异常说明已经执行完成
@@ -126,7 +124,8 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                         resultDictionary.Add(new TransactionsResult()
                         {
                             Key = kv.Key,
-                            Successful = false
+                            Successful = false,
+                            Exception = ex
                         });
                         kv.Value.Rollback();
                         continue;

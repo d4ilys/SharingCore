@@ -8,8 +8,6 @@ namespace FreeSql.SharingCore.Assemble
     /// </summary>
     public class DbWarpFactory
     {
-       
-
         /// <summary>
         /// 根据条件获取对应的数据库实例，支持多租户
         /// </summary>
@@ -19,9 +17,10 @@ namespace FreeSql.SharingCore.Assemble
         /// <param name="separateDbIdent">分库标识，默认是当前年</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
         /// <returns></returns>
-        public static DbWarp Get(string ident, string separateDbIdent = "", string tenant = "")
+        public static DbWarp Get(string ident, string separateDbIdent = "", string tenant = "",
+            bool disableTenancy = false)
         {
-            var key = GetName(ident, separateDbIdent, tenant);
+            var key = GetName(ident, separateDbIdent, tenant,disableTenancy);
             var db = GetInstance(key);
             return new DbWarp
             {
@@ -38,12 +37,13 @@ namespace FreeSql.SharingCore.Assemble
         /// <param name="ident">数据库标识</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
         /// <returns></returns>
-        public static DbWarp GetByKey(string ident,  string tenant)
+        public static DbWarp GetByKey(string ident, string tenant)
         {
             if (string.IsNullOrWhiteSpace(ident))
             {
                 ident = string.Format(ident, tenant);
             }
+
             var db = GetInstance(ident);
             return new DbWarp
             {
@@ -61,21 +61,27 @@ namespace FreeSql.SharingCore.Assemble
         /// <param name="separateDbIdent">分库标识，默认是当前年</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
         /// <returns></returns>
-        public static string GetName(string ident, string separateDbIdent = "", string tenant = "")
+        public static string GetName(string ident, string separateDbIdent = "", string tenant = "",
+            bool disableTenancy = false)
         {
             //这里拿到了数据库配置中的key
             var key = $"{ident}";
 
             if (!string.IsNullOrWhiteSpace(separateDbIdent))
                 key += $"_{separateDbIdent}";
-            if (!string.IsNullOrWhiteSpace(tenant))
+
+            if (!disableTenancy)
             {
-                key += $"_{tenant}";
+                if (!string.IsNullOrWhiteSpace(tenant))
+                {
+                    key += $"_{tenant}";
+                }
+                else if (!string.IsNullOrWhiteSpace(TenantContext.GetTenant()))
+                {
+                    key += $"_{TenantContext.GetTenant()}";
+                }
             }
-            else if (!string.IsNullOrWhiteSpace(TenantContext.GetTenant()))
-            {
-                key += $"_{TenantContext.GetTenant()}";
-            }
+
 
             return key;
         }

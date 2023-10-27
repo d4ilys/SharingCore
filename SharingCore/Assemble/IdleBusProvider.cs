@@ -56,7 +56,7 @@ namespace FreeSql.SharingCore.Assemble
                     lock (LockObject)
                     {
                         Instance ??= new IdleBus<IFreeSql>(options.IdleTimeout);
-                        SharingCoreUtils.InitMehtodCache();
+                        SharingCoreUtils.InitMethodCache();
                     }
                 }
 

@@ -18,9 +18,9 @@ namespace SeparateDatabaseTable
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //设置多租户
-            TenantContext.SetTenant("lemi");
-            SeparateTableSelect();
+
+
+
         }
 
         #region 分库

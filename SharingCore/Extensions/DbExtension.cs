@@ -34,11 +34,13 @@ namespace FreeSql.SharingCore.Extensions
         /// <param name="dbName">数据库标识，对应配置文件中的Identification</param>
         /// <param name="separateDbIdent">分库标识，默认没有分库标识</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
+        /// <param name="disableTenancy">禁用多租户</param>
         /// <remarks>提示：数据库标识(对应配置文件中的Identification) + 租户标识(租户标识，默认没有租户) + 分库标识(分库标识，默认是当前年) = 数据库名称(对应配置文件中的Key)</remarks>
         /// <returns></returns>
-        public static IFreeSql GetFreeSql(this string dbName, string separateDbIdent = "", string tenant = "")
+        public static IFreeSql GetFreeSql(this string dbName, string separateDbIdent = "", string tenant = "",
+            bool disableTenancy = false)
         {
-            return GetDbWarp(dbName, separateDbIdent, tenant).Instance;
+            return GetDbWarp(dbName, separateDbIdent, tenant, disableTenancy).Instance;
         }
 
         /// <summary>
@@ -46,9 +48,9 @@ namespace FreeSql.SharingCore.Extensions
         /// </summary>
         /// <param name="dbName">数据库标识Key</param>
         /// <returns></returns>
-        public static IFreeSql GetFreeSqlByKey(this string dbName)
+        public static IFreeSql GetFreeSqlByKey(this string key)
         {
-            return  IdleBusProvider.Instance.Get(dbName);
+            return IdleBusProvider.Instance.Get(key);
         }
 
         /// <summary>
@@ -69,13 +71,16 @@ namespace FreeSql.SharingCore.Extensions
         /// <param name="dbName">数据库标识，对应配置文件中的Identification</param>
         /// <param name="separateDbIdent">分库标识，默认没有分库标识</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
+        /// <param name="disableTenancy">禁用多租户</param>
         /// <remarks>提示：数据库标识(对应配置文件中的Identification) + 租户标识(租户标识，默认没有租户) + 分库标识(分库标识，默认是当前年) = 数据库名称(对应配置文件中的Key)</remarks>
         /// <returns></returns>
-        public static DbWarp GetDbWarp(this string dbName, string separateDbIdent = "", string tenant = "")
+        public static DbWarp GetDbWarp(this string dbName, string separateDbIdent = "", string tenant = "",
+            bool disableTenancy = false)
         {
+            //TODO disableTenancy
             return string.IsNullOrWhiteSpace(separateDbIdent)
-                ? DbWarpFactory.Get(dbName, tenant)
-                : DbWarpFactory.Get(dbName, separateDbIdent, tenant);
+                ? DbWarpFactory.Get(ident: dbName, tenant: tenant, disableTenancy: disableTenancy)
+                : DbWarpFactory.Get(dbName, separateDbIdent, tenant, disableTenancy);
         }
 
         /// <summary>
@@ -126,6 +131,4 @@ namespace FreeSql.SharingCore.Extensions
             }
         }
     }
-
- 
 }

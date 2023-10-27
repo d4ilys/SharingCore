@@ -55,7 +55,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
 
         public MultiDatabaseTransaction3(DbWarp dbWarp1, DbWarp dbWarp2, DbWarp dbWarp3)
         {
-            local = new DistributedTransaction(new DbWarp[] { dbWarp1, dbWarp2 });
+            local = new DistributedTransaction(new DbWarp[] { dbWarp1, dbWarp2 ,dbWarp3});
             _dbWarp1 = dbWarp1;
             _dbWarp2 = dbWarp2;
             _dbWarp3 = dbWarp3;

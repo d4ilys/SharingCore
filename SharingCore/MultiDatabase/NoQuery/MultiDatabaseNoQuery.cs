@@ -45,13 +45,16 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                     var warp = queryParam.DbName.GetDbWarp(year.Year.ToString(), queryParam.Tenant);
                     dbWarpList.Add(warp);
                 }
+
                 //如果需要跨库则走跨库事务
                 if (dbWarpList.Count > 1)
                 {
                     using (var tran = Wrapper.SharingCore.Transaction(dbWarpList.ToArray())) //集合的第一个记录事务执行日期
                     {
-                        //绑定事件，用于事务补偿
-                        tran.OnCommitFail += OnCommitFail;
+                        //绑定事件
+                        if (OnCommitFail != null)
+                            tran.OnCommitFail += OnCommitFail;
+
                         try
                         {
                             //开始事务
@@ -73,7 +76,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                             }
 
                             //提交事务并返回结果
-                            result = tran.Commit(log).Any();
+                            result = tran.Commit(log).All(r => r.Successful);
                         }
                         catch (Exception e)
                         {
@@ -89,6 +92,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                         Db = dbWarp.Instance,
                         Transaction = null
                     });
+                    result = true;
                 }
             }
             catch (Exception e)

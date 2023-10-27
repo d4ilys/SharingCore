@@ -15,7 +15,7 @@ namespace FreeSql.SharingCore.Common
     {
         private static HashSet<DbInfoByAttribute> dbInfosCache = new HashSet<DbInfoByAttribute>();
 
-        internal static void InitMehtodCache()
+        internal static void InitMethodCache()
         {
             var type = typeof(SharingCoreDbs);
             var entryAssembly = Assembly.GetEntryAssembly();
