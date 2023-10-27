@@ -68,6 +68,12 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                     {
                         //获取到第一个
                         var firstTran = kv.Value;
+                        if (firstTran == null)
+                        {
+                            var msg = $"多库事务提交：{kv.Key},主库事务不存在.";
+                            LogError(msg);
+                            throw new Exception(msg);
+                        }
                         log.exec_sql = JsonConvert.SerializeObject(CurrentSqlLogContext.GetSqlLog());
                         var firstIFreeSql = _fsqlWarpCollect.First().Instance;
                         //如果不存日志表，先创建
@@ -94,8 +100,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                             Successful = false
                         });
                         Rellback();
-                        var logger = SharingCoreUtils.Services.GetService<ILogger<DistributedTransaction>>();
-                        if (logger != null) logger.LogInformation($"第一个库发生异常，其他全部回滚.");
+                        LogWarning($"多库事务提交：{kv.Key}，第一个库发生异常，其他全部回滚.");
                         break;
                     }
                     finally
@@ -109,6 +114,13 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                     // 这里从第二个开始提交
                     try
                     {
+                        if (kv.Value == null)
+                        {
+                            var msg = $"多库事务提交：{kv.Key}, 事务不存在.";
+                            LogError(msg);
+                            throw new Exception(msg);
+                        }
+
                         kv.Value.Commit();
 
                         //Commit没有异常说明已经执行完成
@@ -154,6 +166,35 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             }
             CurrentSqlLogContext.ClearSqlLog();
             return resultDictionary;
+        }
+        
+        private void LogWarning(string message)
+        {
+            try
+            {
+                var logger = SharingCoreUtils.Services.GetService<ILogger<DistributedTransaction>>();
+                if (logger != null) logger.LogWarning(message);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+            
+        private void LogError(string message)
+        {
+            
+            try
+            {
+                var logger = SharingCoreUtils.Services.GetService<ILogger<DistributedTransaction>>();
+                if (logger != null) logger.LogError(message);
+            }
+            catch
+            {
+                // ignored
+            }
+   
         }
 
         public void Rellback()
