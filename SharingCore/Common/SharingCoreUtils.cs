@@ -4,7 +4,10 @@ using System.Linq;
 using System.Reflection;
 using FreeSql.SharingCore.Assemble;
 using FreeSql.SharingCore.Context;
+using FreeSql.SharingCore.MultiDatabase.Transcation;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace FreeSql.SharingCore.Common
 {
@@ -184,6 +187,45 @@ namespace FreeSql.SharingCore.Common
                 tableAssembies.Add(type);
 
             return tableAssembies.ToArray();
+        }
+
+        internal static void LogWarning(string message)
+        {
+            try
+            {
+                var logger = Services.GetService<ILogger<SharingCoreUtils>>();
+                if (logger != null) logger.LogWarning(message);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        internal static void LogInformation(string message)
+        {
+            try
+            {
+                var logger = Services.GetService<ILogger<SharingCoreUtils>>();
+                if (logger != null) logger.LogInformation(message);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        internal static void LogError(string message)
+        {
+            try
+            {
+                var logger = Services.GetService<ILogger<SharingCoreUtils>>();
+                if (logger != null) logger.LogError(message);
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 

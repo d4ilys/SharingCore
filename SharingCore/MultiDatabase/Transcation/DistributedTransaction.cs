@@ -71,7 +71,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                         if (firstTran == null)
                         {
                             var msg = $"多库事务提交：{kv.Key},主库事务不存在.";
-                            LogError(msg);
+                            SharingCoreUtils.LogError(msg);
                             throw new Exception(msg);
                         }
                         log.exec_sql = JsonConvert.SerializeObject(CurrentSqlLogContext.GetSqlLog());
@@ -100,7 +100,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                             Successful = false
                         });
                         Rellback();
-                        LogWarning($"多库事务提交：{kv.Key}，第一个库发生异常，其他全部回滚.");
+                        SharingCoreUtils.LogWarning($"多库事务提交：{kv.Key}，第一个库发生异常，其他全部回滚.");
                         break;
                     }
                     finally
@@ -117,7 +117,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                         if (kv.Value == null)
                         {
                             var msg = $"多库事务提交：{kv.Key}, 事务不存在.";
-                            LogError(msg);
+                            SharingCoreUtils.LogError(msg);
                             throw new Exception(msg);
                         }
 
@@ -168,34 +168,6 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             return resultDictionary;
         }
         
-        private void LogWarning(string message)
-        {
-            try
-            {
-                var logger = SharingCoreUtils.Services.GetService<ILogger<DistributedTransaction>>();
-                if (logger != null) logger.LogWarning(message);
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-            
-        private void LogError(string message)
-        {
-            
-            try
-            {
-                var logger = SharingCoreUtils.Services.GetService<ILogger<DistributedTransaction>>();
-                if (logger != null) logger.LogError(message);
-            }
-            catch
-            {
-                // ignored
-            }
-   
-        }
 
         public void Rellback()
         {

@@ -167,6 +167,26 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
         }
 
         /// <summary>
+        /// 增删改跨库操作
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="func">执行的委托</param>
+        /// <param name="queryParamAction">入参委托</param>
+        /// <param name="compensation">事务补偿委托</param>
+        /// <returns></returns>
+        public static bool NoQuery(Action<NoQueryFuncParam> func,
+            Action<NoQueryParam> queryParamAction, Action<string, DbWarp, Exception>? compensation = null)
+        {
+            var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
+            if (compensation == null)
+            {
+                multiDatabaseNoQuery.OnCommitFail = compensation;
+            }
+            var result = multiDatabaseNoQuery.NoQuery(func, queryParamAction);
+            return result;
+        }
+
+        /// <summary>
         /// 数据库枚举
         /// </summary>
         public static SharingCoreDbs Dbs

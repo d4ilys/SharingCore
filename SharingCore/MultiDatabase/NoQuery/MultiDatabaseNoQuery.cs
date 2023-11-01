@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FreeSql.SharingCore.Assemble.Model;
+using FreeSql.SharingCore.Common;
 using FreeSql.SharingCore.Extensions;
 using FreeSql.SharingCore.MultiDatabase.Model;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
+using System.Transactions;
 
 namespace FreeSql.SharingCore.MultiDatabase.NoQuery
 {
@@ -20,7 +22,6 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
         /// <typeparam name="T"></typeparam>
         /// <param name="func">分页执行的委托</param>
         /// <param name="queryParamAction">入参委托</param>
-        /// <param name="count">返回总条数</param>
         /// <returns></returns>
         public bool NoQuery<T>(Action<NoQueryFuncParam> func,
             Action<NoQueryParam> queryParamAction)
@@ -87,12 +88,43 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                 else
                 {
                     var dbWarp = dbWarpList.FirstOrDefault();
-                    func.Invoke(new NoQueryFuncParam()
+                    var databaseInfo =
+                        SharingCoreUtils.DatabaseConfig.DatabaseInfo.FirstOrDefault(info => info.Key == dbWarp.Name);
+
+                    if (!string.Equals(databaseInfo?.DataType, "clickhouse",
+                            StringComparison.InvariantCultureIgnoreCase))
                     {
-                        Db = dbWarp.Instance,
-                        Transaction = null
-                    });
-                    result = true;
+                        //获取连接池对象
+                        using (var dbConnection = dbWarp?.Instance.Ado.MasterPool.Get())
+                        {
+                            var transaction = dbConnection.Value.BeginTransaction();
+                            try
+                            {
+                                //执行委托
+                                func.Invoke(new NoQueryFuncParam()
+                                {
+                                    Db = dbWarp.Instance,
+                                    Transaction = transaction
+                                });
+
+                                transaction.Commit();
+                                result = true;
+                            }
+                            catch (Exception e)
+                            {
+                                SharingCoreUtils.LogError($"{dbWarp.Name}, NoQuery 单库操作失败, {e.ToString()}");
+                                transaction.Rollback();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        func.Invoke(new NoQueryFuncParam()
+                        {
+                            Db = dbWarp.Instance,
+                            Transaction = null
+                        });
+                    }
                 }
             }
             catch (Exception e)
@@ -102,6 +134,19 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
             }
 
             return result;
+        }
+
+
+        /// <summary>
+        /// 增删改跨库操作
+        /// </summary>
+        /// <param name="func">分页执行的委托</param>
+        /// <param name="queryParamAction">入参委托</param>
+        /// <returns></returns>
+        public bool NoQuery(Action<NoQueryFuncParam> func,
+            Action<NoQueryParam> queryParamAction)
+        {
+            return NoQuery<string>(func, queryParamAction);
         }
     }
 }
