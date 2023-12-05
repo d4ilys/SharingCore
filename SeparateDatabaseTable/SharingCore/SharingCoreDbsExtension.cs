@@ -17,7 +17,6 @@ namespace TSP.WokerServices.Base
         /// </summary>
         /// <param name="dbs"></param>
         /// <returns></returns>
-        [Database(Name = "order_{yyyy}", Separate = "createtime=2022-01-01(1 year)")]
         public static string Order(this SharingCoreDbs dbs) => "order";
 
     }

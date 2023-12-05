@@ -18,9 +18,8 @@ namespace SeparateDatabaseTable
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
-
-
+            TenantContext.SetTenant("lemi");
+            await SeparateDatatableAsync();
         }
 
         #region 分库
@@ -61,21 +60,21 @@ namespace SeparateDatabaseTable
             SharingCore.NoQuery<back_order>(noQuery =>
                 {
                     noQuery.Db.Insert(new back_order
-                    {
-                        reason = "2022-08-07订单取消"
-                    })
+                        {
+                            reason = "2022-08-07订单取消"
+                        })
                         .WithTransaction(noQuery.Transaction) //可以保证跨库事务
                         .ExecuteAffrows();
                     noQuery.Db.Insert(new back_order
-                    {
-                        reason = "2022-08-06订单取消"
-                    })
+                        {
+                            reason = "2022-08-06订单取消"
+                        })
                         .WithTransaction(noQuery.Transaction) //可以保证跨库事务
                         .ExecuteAffrows();
                 },
                 param => param.Init(Dbs.Order(), DateTime.Parse("2022-08-07"),
                     DateTime.Parse("2022-02-07")), //只会写入到2022年的库
-                                                   //事务补偿
+                //事务补偿
                 (logId, dbWarp, exception) => { });
         }
 
@@ -87,7 +86,7 @@ namespace SeparateDatabaseTable
             {
                 var list = query.Db.Select<back_order>().ToList();
                 return list;
-            }, query => query.Init(Dbs.Order(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-12-01")));
+            }, query => query.Init(Dbs.Order(), DateTime.Parse("2023-02-01"), DateTime.Parse("2023-12-01")));
             Console.WriteLine(JsonConvert.SerializeObject(list));
         }
 
@@ -149,8 +148,7 @@ namespace SeparateDatabaseTable
 
     public class back_order
     {
-        [Column(IsIdentity = true)]
-        public int Id { get; set; }
+        [Column(IsIdentity = true)] public int Id { get; set; }
         public string reason { get; set; }
     }
 

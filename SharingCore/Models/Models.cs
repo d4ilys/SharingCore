@@ -34,9 +34,9 @@ namespace FreeSql.SharingCore
         public bool ShowSqlLog { get; set; } = true;
 
         /// <summary>
-        /// 父项目的Assembly，用于扫描SharingCoreDbs扩展方法
+        /// 指定项目的Assembly，用于扫描SharingCoreDbs扩展方法
         /// </summary>
-        public Assembly? BaseReferenceAssembly { get; set; } = null;
+        public List<Assembly> ExtensionMethodsAssembly { get; set; } = new List<Assembly>();
 
         /// <summary>
         /// 对不同数据库定制化设置

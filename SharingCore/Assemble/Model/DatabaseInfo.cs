@@ -33,6 +33,19 @@ namespace FreeSql.SharingCore
         public List<string> Slaves { get; set; } = new List<string>();
     }
 
+    public class SeparateRule
+    {
+        public string Name { get; set; }
+
+        public string Template { get; set; }
+
+        /// <summary>
+        /// 分库规则
+        /// </summary>
+        public string? Separate { get; set; }
+
+    }
+
     public class SharingCoreDbConfig
     {
         /// <summary>
@@ -41,5 +54,7 @@ namespace FreeSql.SharingCore
         public bool ShowSqlLog { get; set; } = true;
 
         public List<DatabaseInfo> DatabaseInfo { get; set; }
+
+        public List<SeparateRule> SeparateRules { get; set; }
     }
 }

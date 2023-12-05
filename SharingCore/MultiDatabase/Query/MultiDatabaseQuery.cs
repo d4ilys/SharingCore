@@ -54,7 +54,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Query
                             var dbWarp = DbWarpFactory.GetByKey(nameItem, queryParam.Tenant);
                             if (dbWarp == null)
                             {
-                                Console.WriteLine($"{queryParam.DbName},{nameItem}不存在..");
+                                SharingCoreUtils.LogError($"{queryParam.DbName},{nameItem}不存在..");
                                 continue;
                             }
 
@@ -181,7 +181,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Query
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"{dbKey}，发生异常 异常信息：{e.Message}");
+                            SharingCoreUtils.LogError($"{dbKey}，发生异常 异常信息：{e.Message}");
                             OnExcetion?.Invoke(e);
                         }
                     }

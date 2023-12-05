@@ -16,20 +16,20 @@ namespace FreeSql.SharingCore.Common
     /// </summary>
     public partial class SharingCoreUtils
     {
-        private static HashSet<DbInfoByAttribute> dbInfosCache = new HashSet<DbInfoByAttribute>();
+        private static readonly HashSet<DbInfoByAttribute> DbInfosCache = new HashSet<DbInfoByAttribute>();
 
         internal static void InitMethodCache()
         {
             var type = typeof(SharingCoreDbs);
             var entryAssembly = Assembly.GetEntryAssembly();
-            var assmblys = new List<Assembly>() { entryAssembly };
-            var baseAssmbly = Options?.BaseReferenceAssembly;
-            if (baseAssmbly != null)
+            var assembly = new List<Assembly>() { entryAssembly };
+            var baseAssembly = Options?.ExtensionMethodsAssembly;
+            if (baseAssembly.Any())
             {
-                assmblys.Add(baseAssmbly);
+                assembly.AddRange(baseAssembly);
             }
 
-            GetExtensionMethods(assmblys, type);
+            GetExtensionMethods(assembly, type);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace FreeSql.SharingCore.Common
         {
             try
             {
-                return dbInfosCache.Any(m => name.ToLower().StartsWith(m.Name.ToLower()));
+                return DbInfosCache.Any(m => name.ToLower().StartsWith(m.Name.ToLower()));
             }
             catch
             {
@@ -53,7 +53,7 @@ namespace FreeSql.SharingCore.Common
         {
             try
             {
-                return dbInfosCache.FirstOrDefault(m => m.Name.ToLower() == name.ToLower())?.DateTimeSeparate;
+                return DbInfosCache.FirstOrDefault(m => m.Name.ToLower() == name.ToLower())?.DateTimeSeparate;
             }
             catch
             {
@@ -110,10 +110,9 @@ namespace FreeSql.SharingCore.Common
                     .Where(@t => @t.method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false))
                     .Where(@t => @t.method.GetParameters()[0].ParameterType == extendedType)
                     .Select(@t => @t);
+
                 foreach (var item in query)
                 {
-                    var attribute = item.method.GetCustomAttribute<DatabaseAttribute>();
-
                     var dbInfoByAttribute = new DbInfoByAttribute();
 
                     //得到扩展方法的返回值
@@ -121,7 +120,25 @@ namespace FreeSql.SharingCore.Common
                     {
                         Activator.CreateInstance(extendedType)
                     });
+
                     dbInfoByAttribute.Name = res.ToString();
+
+                    var attribute = item.method.GetCustomAttribute<DatabaseAttribute>();
+
+                    //先看看配置文件有没有分库规则
+                    if (attribute == null)
+                    {
+                        var rule = DatabaseConfig.SeparateRules.FirstOrDefault(s =>
+                            s.Name == dbInfoByAttribute.Name);
+                        if (rule != null)
+                        {
+                            attribute = new DatabaseAttribute()
+                            {
+                                Name = rule.Template,
+                                Separate = rule.Separate
+                            };
+                        }
+                    }
 
                     //如果没有标记特性默认是扩展方法的名称
                     if (attribute != null)
@@ -133,7 +150,8 @@ namespace FreeSql.SharingCore.Common
                         }
                     }
 
-                    dbInfosCache.Add(dbInfoByAttribute);
+
+                    DbInfosCache.Add(dbInfoByAttribute);
                 }
             }
         }
@@ -172,12 +190,10 @@ namespace FreeSql.SharingCore.Common
             return IdleBusProvider.Instance.GetKeys().ToList();
         }
 
-
         /// <summary>
         /// 通过命名空间得到所有要创建的实体类.
         /// </summary>
         /// <typeparam name="IEntity"></typeparam>
-        /// <param name="entitiesFullName">根据需要调整 entitiesFullName 下的命名空间值</param>
         /// <returns></returns>
         public static Type[] GetTypesByNameSpace<IEntity>()
         {

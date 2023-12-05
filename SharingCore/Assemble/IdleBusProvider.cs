@@ -45,11 +45,12 @@ namespace FreeSql.SharingCore.Assemble
             });
         }
 
-
         private static void InitCommon(IConfiguration configuration, SharingCoreOptions options)
         {
             try
             {
+                var dbConfigs = InitConfiguration(configuration, options);
+
                 //经典！双if+lock！
                 if (Instance == null)
                 {
@@ -59,8 +60,6 @@ namespace FreeSql.SharingCore.Assemble
                         SharingCoreUtils.InitMethodCache();
                     }
                 }
-
-                var dbConfigs = InitConfiguration(configuration, options);
 
                 //连接放入对象管理器
                 foreach (var item in dbConfigs.DatabaseInfo)

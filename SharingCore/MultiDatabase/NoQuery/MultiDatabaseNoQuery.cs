@@ -1,6 +1,7 @@
 ﻿using FreeSharding.SeparateDatabase;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using FreeSql.SharingCore.Assemble.Model;
 using FreeSql.SharingCore.Common;
@@ -95,26 +96,16 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                             StringComparison.InvariantCultureIgnoreCase))
                     {
                         //获取连接池对象
-                        using (var dbConnection = dbWarp?.Instance.Ado.MasterPool.Get())
+                        using (var tran = dbWarp?.Instance.CreateUnitOfWork())
                         {
-                            var transaction = dbConnection.Value.BeginTransaction();
-                            try
+                            //执行委托
+                            func.Invoke(new NoQueryFuncParam()
                             {
-                                //执行委托
-                                func.Invoke(new NoQueryFuncParam()
-                                {
-                                    Db = dbWarp.Instance,
-                                    Transaction = transaction
-                                });
-
-                                transaction.Commit();
-                                result = true;
-                            }
-                            catch (Exception e)
-                            {
-                                SharingCoreUtils.LogError($"{dbWarp.Name}, NoQuery 单库操作失败, {e.ToString()}");
-                                transaction.Rollback();
-                            }
+                                Db = dbWarp.Instance,
+                                Transaction = tran.GetOrBeginTransaction()
+                            });
+                            tran.Commit();
+                            result = true;
                         }
                     }
                     else
@@ -129,7 +120,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                SharingCoreUtils.LogError($"NoQuery 操作失败, {e.ToString()}");
                 throw;
             }
 

@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0</TargetFrameworks>
+		<TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>Daily</Authors>
-		<Version>1.2.9</Version>
+		<Version>1.3.2</Version>
 		<Description>基于FreeSql实现 跨库分页查询、分表查询、分布式事务</Description>
 		<PackageId>Daily.FreeSql.SharingCore</PackageId>
 		<Product>Daily.FreeSql.SharingCore</Product>

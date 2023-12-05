@@ -1,4 +1,6 @@
+using System.Reflection;
 using FreeSql.SharingCore.Extensions;
+using Newtonsoft.Json;
 
 namespace SeparateDatabaseTable
 {
