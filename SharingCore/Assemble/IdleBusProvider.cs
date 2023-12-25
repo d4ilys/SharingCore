@@ -89,6 +89,13 @@ namespace FreeSql.SharingCore.Assemble
                         //创建FreeSql对象
                         var freeSqlBuild = new FreeSqlBuilder()
                             .UseConnectionString(DataTypeAdapter.GetDataType(item.DataType), item.ConnectString);
+
+                        //使用默认连接池
+                        if (options.UseAdoConnectionPool)
+                        {
+                            freeSqlBuild.UseAdoConnectionPool(true);
+                        }
+
                         //是否显示日志
                         if (options.ShowSqlLog)
                         {
@@ -198,12 +205,6 @@ namespace FreeSql.SharingCore.Assemble
                     freeSqlBuild = value.FreeSqlBuilderInject.Invoke(freeSqlBuild);
                     flag = false;
                 }
-
-                if (exist && value != null && value.UseAdoConnectionPool)
-                {
-                    freeSqlBuild.UseAdoConnectionPool(true);
-                    flag = false;
-                }
             }
 
             if (flag)
@@ -214,11 +215,6 @@ namespace FreeSql.SharingCore.Assemble
                     if (options.TogetherDatabaseOption.FreeSqlBuilderInject != null)
                     {
                         freeSqlBuild = options.TogetherDatabaseOption.FreeSqlBuilderInject.Invoke(freeSqlBuild);
-                    }
-
-                    if (options.TogetherDatabaseOption.UseAdoConnectionPool)
-                    {
-                        freeSqlBuild.UseAdoConnectionPool(true);
                     }
                 }
             }

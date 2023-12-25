@@ -51,6 +51,12 @@ namespace FreeSql.SharingCore.Extensions
         {
             return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
         }
+
+
+        public static ISelectGrouping<TKey,TValue> PageCore<TKey,TValue>(this ISelectGrouping<TKey,TValue> select,  QueryFuncParam param, out long count)
+        {
+            return select.Limit(param.PageSize).Offset((param.CurrPage - 1) * param.PageSize + param.Skip).Count(out count);
+        }
     }
 
     public static class ISelectToListExtension

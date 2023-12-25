@@ -29,6 +29,11 @@ namespace FreeSql.SharingCore
         public bool DemandLoading { get; set; } = false;
 
         /// <summary>
+        /// 开启 ADO.NET 自带的连接池
+        /// </summary>
+        public bool UseAdoConnectionPool { get; set; } = true;
+
+        /// <summary>
         /// 是否显示日志，优先级高于配置文件
         /// </summary>
         public bool ShowSqlLog { get; set; } = true;
@@ -56,11 +61,6 @@ namespace FreeSql.SharingCore
         /// 对FreeSqlBuilder扩展设置
         /// </summary>
         public Func<FreeSqlBuilder, FreeSqlBuilder>? FreeSqlBuilderInject { get; set; } = null;
-
-        /// <summary>
-        /// 使用Ado自带的连接池
-        /// </summary>
-        public bool UseAdoConnectionPool { get; set; } = false;
 
         internal dynamic? FreeSqlFilterExpression = null;
 
