@@ -32,7 +32,10 @@ namespace FreeSql.SharingCore.MultiDatabase.Query
                 queryParamAction(queryParam);
                 //根据日期范围获取数据库名称.
                 var dbNamesByTimeRange = SharingCoreUtils.GetDbNamesByColumnValueRange(queryParam.DbName, "", queryParam.StartTime,
-                    queryParam.EndTime).Reverse();
+                    queryParam.EndTime);
+
+                //排序规则
+                dbNamesByTimeRange = queryParam.SortType == QueryPageSortType.Ascending ? dbNamesByTimeRange.OrderBy(s => s) : dbNamesByTimeRange.OrderByDescending(s => s);
 
                 //记录第一次查询的页数
                 long size = 0;
@@ -51,7 +54,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Query
                         try
                         {
                             k++;
-                            var dbWarp = DbWarpFactory.GetByKey(nameItem, queryParam.Tenant);
+                            var dbWarp = DbWarpFactory.GetByKey(nameItem,"");
                             if (dbWarp == null)
                             {
                                 SharingCoreUtils.LogError($"{queryParam.DbName},{nameItem}不存在..");
@@ -222,6 +225,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Query
             });
             return list;
         }
+
 
         /// <summary>
         /// 并行跨库ToOne查询

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--<PackageReference Include="Daily.FreeSql.SharingCore" Version="1.3.5" />-->
     <PackageReference Include="FreeSql.Provider.Sqlite" Version="3.2.700" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
   </ItemGroup>

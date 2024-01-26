@@ -1,6 +1,7 @@
 using FreeSql.DataAnnotations;
 using FreeSql.SharingCore.Context;
 using FreeSql.SharingCore.Extensions;
+using FreeSql.SharingCore.MultiDatabase.Model;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
 using Newtonsoft.Json;
 using TSP.WokerServices.Base;
@@ -19,10 +20,22 @@ namespace SeparateDatabaseTable
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             TenantContext.SetTenant("lemi");
-            await SeparateDatatableAsync();
+            Test();
         }
 
         #region 分库
+
+        public void Test()
+        {
+            NoQuery(db =>
+            {
+
+                var sql = db.Db.Insert(new back_order { reason = "订单取消" }).ToSql();
+                Console.WriteLine(sql);
+                Console.WriteLine(db.Db.Ado.ConnectionString);
+            }, param => param.Init(Dbs.Order(), DateTime.Parse("2023-12-30"),
+                DateTime.Parse("2024-08-07")));
+        }
 
         public async Task SeparateDatatableInitAsync()
         {
@@ -86,8 +99,21 @@ namespace SeparateDatabaseTable
             {
                 var list = query.Db.Select<back_order>().ToList();
                 return list;
-            }, query => query.Init(Dbs.Order(), DateTime.Parse("2023-02-01"), DateTime.Parse("2023-12-01")));
+            }, query => query.Init(Dbs.Order(), DateTime.Parse("2024-01-01"), DateTime.Parse("2024-01-01")));
             Console.WriteLine(JsonConvert.SerializeObject(list));
+        }
+
+        public async Task SeparateDatatablePageAsync()
+        {
+            var result = QueryPageList(query =>
+                {
+                    var result = query.Db.Select<back_order>().PageCore(query, out var count)
+                        .ToListCore(o => o, query, count);
+                    return new QueryFuncResult<back_order>(result, count);
+                },
+                param => param.Init(Dbs.Order(), 10, 1, DateTime.Parse("2022-12-28"), DateTime.Parse("2023-01-04"))
+                    .Sort(QueryPageSortType.Ascending), out var total);
+            Console.WriteLine($"总条数:{total}，查询条数：{result.Count}");
         }
 
         #endregion
@@ -133,6 +159,7 @@ namespace SeparateDatabaseTable
             db.Update<logs>().Set(logs => logs.content, "已经修改").Where(logs => logs.Id == 1 && logs.createtime == ct)
                 .ExecuteAffrows();
         }
+
 
         public void SeparateTableSelect()
         {

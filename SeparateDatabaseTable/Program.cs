@@ -12,7 +12,10 @@ namespace SeparateDatabaseTable
                 .ConfigureServices(services =>
                 {
                     services.AddHostedService<Worker>();
-                    services.AddSharingCore();
+                    services.AddSharingCore(options =>
+                    {
+                        options.ListeningConfiguration = false;
+                    });
                 })
                 .Build();
 

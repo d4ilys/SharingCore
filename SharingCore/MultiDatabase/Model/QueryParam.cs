@@ -12,11 +12,6 @@ namespace FreeSql.SharingCore.MultiDatabase.Model
         public string DbName { get; set; }
 
         /// <summary>
-        /// 租户标识，可为空
-        /// </summary>
-        public string Tenant { get; set; } = string.Empty;
-
-        /// <summary>
         /// 日期范围-开始时间
         /// </summary>
         public DateTime StartTime { get; set; }
@@ -37,6 +32,11 @@ namespace FreeSql.SharingCore.MultiDatabase.Model
         public int CurrPage { get; set; }
 
         /// <summary>
+        /// 排序规则
+        /// </summary>
+        public QueryPageSortType SortType { get; set; } = QueryPageSortType.Ascending;
+
+        /// <summary>
         /// 初始化查询对象
         /// </summary>
         /// <param name="_dbName">数据库Identification</param>
@@ -44,15 +44,25 @@ namespace FreeSql.SharingCore.MultiDatabase.Model
         /// <param name="_currPage">当前页</param>
         /// <param name="_startTime">开始日期</param>
         /// <param name="_endTime">结束日期</param>
-        public void Init(string _dbName, int _pageSize, int _currPage, DateTime _startTime, DateTime _endTime,
-            string _tenant = "")
+        public QueryParam Init(string _dbName, int _pageSize, int _currPage, DateTime _startTime, DateTime _endTime)
         {
             DbName = _dbName;
             PageSize = _pageSize;
             CurrPage = _currPage;
             StartTime = _startTime;
             EndTime = _endTime;
-            Tenant = _tenant;
+            return this;
+        }
+
+        /// <summary>
+        /// 查询时间排序
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public QueryParam Sort(QueryPageSortType type)
+        {
+            SortType = type;
+            return this;
         }
     }
 

@@ -24,6 +24,11 @@ namespace FreeSql.SharingCore
         public List<DatabaseInfo>? DatabaseInfoSource { get; set; } = null;
 
         /// <summary>
+        /// FreeSql对象初始化完成后执行动作
+        /// </summary>
+        public List<Action>? InitializationCompleteExecutor { get; set; } = new List<Action>();
+
+        /// <summary>
         /// 是否根据SharingCoreDbs中的扩展方法按需加载数据库
         /// </summary>
         public bool DemandLoading { get; set; } = false;
@@ -32,6 +37,11 @@ namespace FreeSql.SharingCore
         /// 开启 ADO.NET 自带的连接池
         /// </summary>
         public bool UseAdoConnectionPool { get; set; } = true;
+
+        /// <summary>
+        /// 是否监听配置文件自动初始化数据库
+        /// </summary>
+        public bool ListeningConfiguration { get; set; } = false;
 
         /// <summary>
         /// 是否显示日志，优先级高于配置文件

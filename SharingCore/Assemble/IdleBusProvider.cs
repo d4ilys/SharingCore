@@ -35,14 +35,24 @@ namespace FreeSql.SharingCore.Assemble
             }
 
             Init();
-            ChangeToken.OnChange(() => configuration?.GetReloadToken(), () =>
+
+            if (options.ListeningConfiguration)
             {
-                //热更新
-                if (configuration != null)
+                ChangeToken.OnChange(() => configuration?.GetReloadToken(), () =>
                 {
-                    Init();
-                }
-            });
+                    //热更新
+                    if (configuration != null)
+                    {
+                        Init();
+                    }
+                });
+            }
+
+            //加载完成后执行的动作
+            foreach (var action in options.InitializationCompleteExecutor!)
+            {
+                action.Invoke();
+            }
         }
 
         private static void InitCommon(IConfiguration configuration, SharingCoreOptions options)

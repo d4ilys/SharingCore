@@ -25,10 +25,11 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
             var local = new AsyncLocal<DistributedTransaction>
             {
                 Value = new DistributedTransaction(dbWarps)
-            }; 
+            };
 
             return local.Value;
         }
+
         /// <summary>
         /// 多库事务
         /// </summar y>
@@ -52,6 +53,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
             local.Value = new MultiDatabaseTransaction3(dbWarp1, dbWarp2, dbWarp3);
             return local.Value;
         }
+
         /// <summary>
         /// 跨库分页查询，包装方法
         /// </summary>
@@ -162,6 +164,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
             {
                 multiDatabaseNoQuery.OnCommitFail = compensation;
             }
+
             var result = multiDatabaseNoQuery.NoQuery<T>(func, queryParamAction);
             return result;
         }
@@ -182,8 +185,23 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
             {
                 multiDatabaseNoQuery.OnCommitFail = compensation;
             }
+
             var result = multiDatabaseNoQuery.NoQuery(func, queryParamAction);
             return result;
+        }
+
+
+        /// <summary>
+        /// 跨库操作
+        /// </summary>
+        /// <param name="dbAction">跨年数据库</param>
+        /// <param name="queryParamAction">定位参数</param>
+        /// <returns></returns>
+        public static void Handle(Action<IFreeSql> dbAction,
+            Action<NoQueryParam> queryParamAction)
+        {
+            var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
+            var result = multiDatabaseNoQuery.Handle(dbAction, queryParamAction);
         }
 
         /// <summary>

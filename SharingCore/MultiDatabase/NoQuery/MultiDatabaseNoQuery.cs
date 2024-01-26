@@ -9,6 +9,7 @@ using FreeSql.SharingCore.Extensions;
 using FreeSql.SharingCore.MultiDatabase.Model;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
 using System.Transactions;
+using FreeSql.SharingCore.Assemble;
 
 namespace FreeSql.SharingCore.MultiDatabase.NoQuery
 {
@@ -33,19 +34,14 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                 var queryParam = new NoQueryParam();
                 queryParamAction(queryParam);
                 //获取到跨库的信息
-                var yearArray = SeparateDatabase.SparateInfo(param =>
-                {
-                    param.StartTime = queryParam.StartTime;
-                    param.EndTime = queryParam.EndTime;
-                    param.StrideYear = 1; //几年一次库
-                }).YearTimeData;
-                //数据库
-                yearArray.Reverse();
+                var dbNamesByTimeRange =
+                    SharingCoreUtils.GetDbNamesByColumnValueRange(queryParam.DbName, "", queryParam.StartTime,
+                        queryParam.EndTime);
                 var dbWarpList = new List<DbWarp>();
-                foreach (var year in yearArray)
+                foreach (var year in dbNamesByTimeRange)
                 {
-                    var warp = queryParam.DbName.GetDbWarp(year.Year.ToString(), queryParam.Tenant);
-                    dbWarpList.Add(warp);
+                    var dbWarp = DbWarpFactory.GetByKey(year,"");
+                    dbWarpList.Add(dbWarp);
                 }
 
                 //如果需要跨库则走跨库事务
@@ -127,6 +123,39 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
             return result;
         }
 
+
+        /// <summary>
+        /// 跨库操作 无事务
+        /// </summary>
+        /// <param name="dbAction">分库操作</param>
+        /// <param name="queryParamAction">入参委托</param>
+        /// <returns></returns>
+        public bool Handle(Action<IFreeSql> dbAction,
+            Action<NoQueryParam> queryParamAction)
+        {
+            var result = false;
+            try
+            {
+                var queryParam = new NoQueryParam();
+                queryParamAction(queryParam);
+                //根据日期范围获取数据库名称
+                var dbNamesByTimeRange =
+                    SharingCoreUtils.GetDbNamesByColumnValueRange(queryParam.DbName, "", queryParam.StartTime,
+                        queryParam.EndTime);
+                foreach (var year in dbNamesByTimeRange)
+                {
+                    var db = year.GetFreeSqlByKey();
+                    dbAction.Invoke(db);
+                }
+            }
+            catch (Exception e)
+            {
+                SharingCoreUtils.LogError($"NoQuery 操作失败, {e.ToString()}");
+                throw;
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// 增删改跨库操作
