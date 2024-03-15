@@ -44,6 +44,11 @@ namespace FreeSql.SharingCore
         public bool ListeningConfiguration { get; set; } = false;
 
         /// <summary>
+        /// FreeSql 全局 Aop
+        /// </summary>
+        public Action<IFreeSql>? Aop { get; set; } = null;
+
+        /// <summary>
         /// 是否显示日志，优先级高于配置文件
         /// </summary>
         public bool ShowSqlLog { get; set; } = true;

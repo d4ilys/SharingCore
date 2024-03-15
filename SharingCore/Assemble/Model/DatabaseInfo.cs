@@ -13,7 +13,7 @@ namespace FreeSql.SharingCore
         public string? Key { get; set; }
 
         /// <summary>
-        /// 数据库名称前缀，例如分库：Business_tenant01_2022，这里的KIdentificationey应该是Business
+        /// 数据库名称前缀，例如分库：Business_tenant01_2022，这里的Identificatione应该是Business
         /// </summary>
         public string? Identification { get; set; }
 

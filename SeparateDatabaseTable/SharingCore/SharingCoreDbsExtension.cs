@@ -1,10 +1,15 @@
-﻿using FreeSql.SharingCore;
-using FreeSql.SharingCore.MultiDatabase.Wrapper;
+﻿using FreeSql.SharingCore.MultiDatabase.Wrapper;
 
-namespace TSP.WokerServices.Base
+namespace SeparateDatabaseTable.SharingCoreCommon
 {
     public static class SharingCoreDbsExtension
     {
+        /// <summary>
+        /// 日志
+        /// </summary>
+        /// <returns></returns>
+        public static string Common(this SharingCoreDbs dbs) => "common_config";
+
         /// <summary>
         /// 日志
         /// </summary>

@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using FreeSql.SharingCore.Assemble;
 using FreeSql.SharingCore.Context;
 using FreeSql.SharingCore.MultiDatabase.Transcation;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -61,7 +63,7 @@ namespace FreeSql.SharingCore.Common
             }
         }
 
-        internal static IEnumerable<string> GetDbNamesByColumnValueRange(string name, string tenant,
+        public static IEnumerable<string> GetDbNamesByColumnValueRange(string name, string tenant,
             object columnValue1, object? columnValue2 = null)
         {
             List<string> dbList = new List<string>();
@@ -172,14 +174,6 @@ namespace FreeSql.SharingCore.Common
             return methodNames;
         }
 
-        /// <summary>
-        /// 获取数据库的注册数量
-        /// </summary>
-        /// <returns></returns>
-        public static int GetDbQuantity()
-        {
-            return IdleBusProvider.Instance?.Quantity ?? 0;
-        }
 
         /// <summary>
         /// 获取注册数据库所有的Key
@@ -203,6 +197,48 @@ namespace FreeSql.SharingCore.Common
                 tableAssembies.Add(type);
 
             return tableAssembies.ToArray();
+        }
+
+        /// <summary>
+        /// 向FreeSql管理器追加新的实例
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static void IdleBusAppend(SharingCoreDbConfig config)
+        {
+            IdleBusProvider.Register(config, Options);
+            DatabaseConfig.DatabaseInfo.AddRange(config.DatabaseInfo);
+            DatabaseConfig.SeparateRules.AddRange(config.SeparateRules);
+        }
+
+        /// <summary>
+        /// FreeSql管理器删除指定实例
+        /// </summary>
+        /// <returns></returns>
+        public static void IdleBusRemove(params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                IdleBusProvider.Instance?.TryRemove(key);
+            }
+        }
+
+        /// <summary>
+        /// 获取数据库的注册数量
+        /// </summary>
+        /// <returns></returns>
+        public static List<string> IdleBusRegisterInfo()
+        {
+            return IdleBusProvider.Instance!.GetKeys().ToList();
+        }
+
+        /// <summary>
+        /// 获取数据库的注册数量
+        /// </summary>
+        /// <returns></returns>
+        public static int IdleBusRegisterCount()
+        {
+            return IdleBusProvider.Instance?.Quantity ?? 0;
         }
 
         internal static void LogWarning(string message)

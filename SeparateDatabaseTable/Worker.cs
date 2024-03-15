@@ -1,10 +1,13 @@
 using FreeSql.DataAnnotations;
+using FreeSql.SharingCore.Common;
 using FreeSql.SharingCore.Context;
 using FreeSql.SharingCore.Extensions;
 using FreeSql.SharingCore.MultiDatabase.Model;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Newtonsoft.Json;
-using TSP.WokerServices.Base;
+using SeparateDatabaseTable.SharingCoreCommon;
+using System.Linq;
 
 namespace SeparateDatabaseTable
 {
@@ -20,7 +23,8 @@ namespace SeparateDatabaseTable
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             TenantContext.SetTenant("lemi");
-            Test();
+            TestAppend();
+            await SeparateDatatableAsync();
         }
 
         #region 分库
@@ -29,10 +33,7 @@ namespace SeparateDatabaseTable
         {
             NoQuery(db =>
             {
-
-                var sql = db.Db.Insert(new back_order { reason = "订单取消" }).ToSql();
-                Console.WriteLine(sql);
-                Console.WriteLine(db.Db.Ado.ConnectionString);
+                var sql = db.Db.Insert(new back_order { reason = "订单取消" }).ExecuteAffrows();
             }, param => param.Init(Dbs.Order(), DateTime.Parse("2023-12-30"),
                 DateTime.Parse("2024-08-07")));
         }
@@ -99,7 +100,7 @@ namespace SeparateDatabaseTable
             {
                 var list = query.Db.Select<back_order>().ToList();
                 return list;
-            }, query => query.Init(Dbs.Order(), DateTime.Parse("2024-01-01"), DateTime.Parse("2024-01-01")));
+            }, query => query.Init(Dbs.Order(), DateTime.Parse("2023-01-01"), DateTime.Parse("2023-01-01")));
             Console.WriteLine(JsonConvert.SerializeObject(list));
         }
 
@@ -171,6 +172,82 @@ namespace SeparateDatabaseTable
         }
 
         #endregion
+
+        #region FreeSql动态扩展
+
+        public static void Init()
+        {
+            var fsql = Dbs.Common().GetFreeSqlByKey();
+            //fsql.CodeFirst.SyncStructure<TenantDbConfig>();
+            //fsql.CodeFirst.SyncStructure<TenantSeparateRule>();
+
+            //fsql.Insert(new List<TenantDbConfig>()
+            //{
+            //    new()
+            //    {
+            //        Key = "order_2022_lemi",
+            //        Identification = "order",
+            //        ConnectString = "data source=db/order_2022_lemi.db;",
+            //        DataType = "sqlite",
+            //    },
+            //    new()
+            //    {
+            //        Key = "order_2023_lemi",
+            //        Identification = "order",
+            //        ConnectString = "data source=db/order_2023_lemi.db;",
+            //        DataType = "sqlite",
+            //    },
+            //    new()
+            //    {
+            //        Key = "order_2024_lemi",
+            //        Identification = "order",
+            //        ConnectString = "data source=db/order_2024_lemi.db;",
+            //        DataType = "sqlite",
+            //    },
+            //}).ExecuteAffrows();
+
+            //fsql.Insert(new TenantSeparateRule
+            //{
+            //    Name = "order",
+            //    Template = "order_{yyyy}",
+            //    Separate = "createtime=2022-01-01(1 year)"
+            //}).ExecuteAffrows();
+        }
+
+        public static void TestAppend()
+        {
+            var fsql = Dbs.Common().GetFreeSqlByKey();
+            var tenantDbConfigs = fsql.Select<TenantDbConfig>().ToList();
+            var tenantSeparateRule = fsql.Select<TenantSeparateRule>().ToList();
+
+            Console.WriteLine(string.Join("-", SharingCoreUtils.IdleBusRegisterInfo()));
+
+            SharingCoreUtils.IdleBusAppend(new SharingCoreDbConfig()
+            {
+                DatabaseInfo = tenantDbConfigs.Select(config => new DatabaseInfo
+                {
+                    Key = config.Key,
+                    Identification = config.Identification,
+                    ConnectString = config.ConnectString,
+                    DataType = config.DataType
+                }).ToList(),
+                SeparateRules = tenantSeparateRule.Select(rule => new SeparateRule
+                {
+                    Name = rule.Name,
+                    Template = rule.Template,
+                    Separate = rule.Separate,
+                }).ToList()
+            });
+
+            Console.WriteLine(string.Join("-", SharingCoreUtils.IdleBusRegisterInfo()));
+
+            Console.WriteLine(JsonConvert.SerializeObject(SharingCoreUtils.DatabaseConfig.DatabaseInfo));
+            Console.WriteLine(JsonConvert.SerializeObject(SharingCoreUtils.DatabaseConfig.SeparateRules));
+            Console.WriteLine(JsonConvert.SerializeObject(SharingCoreUtils.Options));
+
+        }
+
+        #endregion
     }
 
     public class back_order
@@ -189,5 +266,45 @@ namespace SeparateDatabaseTable
 
         //通过此字段定位分表
         public DateTime createtime { get; set; }
+    }
+
+    public class TenantDbConfig
+    {
+        /// <summary>
+        /// Key就是区分唯一的标识，Key格式{数据库前缀(Identification)}_租户标识_分库标识
+        /// </summary>
+        public string? Key { get; set; }
+
+        /// <summary>
+        /// 数据库名称前缀，例如分库：Business_tenant01_2022，这里的Identificatione应该是Business
+        /// </summary>
+        public string? Identification { get; set; }
+
+        /// <summary>
+        /// 数据库连接字符串
+        /// </summary>
+        public string? ConnectString { get; set; }
+
+        /// <summary>
+        /// 数据库类型
+        /// </summary>
+        public string? DataType { get; set; }
+
+        /// <summary>
+        /// 读写分离-从库
+        /// </summary>
+        public List<string> Slaves { get; set; } = new List<string>();
+    }
+
+    public class TenantSeparateRule
+    {
+        public string Name { get; set; }
+
+        public string Template { get; set; }
+
+        /// <summary>
+        /// 分库规则
+        /// </summary>
+        public string? Separate { get; set; }
     }
 }

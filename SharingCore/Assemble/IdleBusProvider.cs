@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FreeSql.SharingCore.Common;
 using FreeSql.SharingCore.Context;
+using Microsoft.Extensions.Options;
 
 namespace FreeSql.SharingCore.Assemble
 {
@@ -55,6 +56,7 @@ namespace FreeSql.SharingCore.Assemble
             }
         }
 
+
         private static void InitCommon(IConfiguration configuration, SharingCoreOptions options)
         {
             try
@@ -71,83 +73,7 @@ namespace FreeSql.SharingCore.Assemble
                     }
                 }
 
-                //连接放入对象管理器
-                foreach (var item in dbConfigs.DatabaseInfo)
-                {
-                    if (Instance.Exists(item.Key)) //删除这个对象然后重新build
-                    {
-                        try
-                        {
-                            Instance.TryRemove(item.Key);
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
-                    }
-
-                    //是否开启了按需加载
-                    if (options.DemandLoading)
-                    {
-                        //如果扩展方法中没有这个数据库则跳出循环
-                        if (!SharingCoreUtils.TryIsLoad(item.Key))
-                            continue;
-                    }
-
-                    Instance.Register(item.Key, () =>
-                    {
-                        //创建FreeSql对象
-                        var freeSqlBuild = new FreeSqlBuilder()
-                            .UseConnectionString(DataTypeAdapter.GetDataType(item.DataType), item.ConnectString);
-
-                        //使用默认连接池
-                        if (options.UseAdoConnectionPool)
-                        {
-                            freeSqlBuild.UseAdoConnectionPool(true);
-                        }
-
-                        //是否显示日志
-                        if (options.ShowSqlLog)
-                        {
-                            if (dbConfigs.ShowSqlLog)
-                            {
-                                freeSqlBuild.UseNoneCommandParameter(true).UseMonitorCommand(cmd =>
-                                {
-                                    var logger = SharingCoreUtils.Services.GetService<ILogger<IdleBusProvider>>();
-                                    logger.LogInformation(
-                                        $"{item.Key}：监听到SQL-{DateTime.Now:yyy-MM-dd HH:mm:ss}：{cmd.CommandText}{Environment.NewLine}");
-                                });
-                            }
-                        }
-
-                        //判断是否配置了读写分离
-                        if (item.Slaves.Any())
-                        {
-                            //配置读写分离
-                            freeSqlBuild.UseSlave(item.Slaves.ToArray());
-                        }
-
-                        //配置FreeSqlBuilder
-                        InjectFreeSqlBuilder(options, ref freeSqlBuild, item.Key);
-
-                        //开始注册
-                        var freeSql = freeSqlBuild.Build();
-
-                        //监控日志，拼接字符串
-                        freeSql.Aop.CurdAfter += (sender, args) =>
-                        {
-                            if (args.CurdType != CurdType.Select)
-                            {
-                                CurrentSqlLogContext.SetSqlLog(item.Key, args.Sql);
-                            }
-                        };
-
-                        //配置过滤器
-                        InjectFreeSqlFilter(options, ref freeSql, item.Key);
-
-                        return freeSql;
-                    });
-                }
+                Register(dbConfigs, options);
             }
             catch (Exception e)
             {
@@ -155,6 +81,92 @@ namespace FreeSql.SharingCore.Assemble
             }
         }
 
+        internal static void Register(SharingCoreDbConfig dbConfigs, SharingCoreOptions options)
+        {
+            //连接放入对象管理器
+            foreach (var item in dbConfigs.DatabaseInfo)
+            {
+                if (Instance.Exists(item.Key)) //删除这个对象然后重新build
+                {
+                    try
+                    {
+                        Instance.TryRemove(item.Key);
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+
+                //是否开启了按需加载
+                if (options.DemandLoading)
+                {
+                    //如果扩展方法中没有这个数据库则跳出循环
+                    if (!SharingCoreUtils.TryIsLoad(item.Key))
+                        continue;
+                }
+
+                Instance.Register(item.Key, () =>
+                {
+                    //创建FreeSql对象
+                    var freeSqlBuild = new FreeSqlBuilder()
+                        .UseConnectionString(DataTypeAdapter.GetDataType(item.DataType), item.ConnectString);
+
+                    //使用默认连接池
+                    if (options.UseAdoConnectionPool)
+                    {
+                        freeSqlBuild.UseAdoConnectionPool(true);
+                    }
+
+                    //是否显示日志
+                    if (options.ShowSqlLog)
+                    {
+                        if (dbConfigs.ShowSqlLog)
+                        {
+                            freeSqlBuild.UseNoneCommandParameter(true).UseMonitorCommand(cmd =>
+                            {
+                                var logger = SharingCoreUtils.Services.GetService<ILogger<IdleBusProvider>>();
+                                logger.LogInformation(
+                                    $"{item.Key}：监听到SQL-{DateTime.Now:yyy-MM-dd HH:mm:ss}：{cmd.CommandText}{Environment.NewLine}");
+                            });
+                        }
+                    }
+
+                    //判断是否配置了读写分离
+                    if (item.Slaves.Any())
+                    {
+                        //配置读写分离
+                        freeSqlBuild.UseSlave(item.Slaves.ToArray());
+                    }
+
+                    //配置FreeSqlBuilder
+                    InjectFreeSqlBuilder(options, ref freeSqlBuild, item.Key);
+
+                    //开始注册
+                    var freeSql = freeSqlBuild.Build();
+
+                    //监控日志，拼接字符串
+                    freeSql.Aop.CurdAfter += (sender, args) =>
+                    {
+                        if (args.CurdType != CurdType.Select)
+                        {
+                            CurrentSqlLogContext.SetSqlLog(item.Key, args.Sql);
+                        }
+                    };
+
+                    //配置过滤器
+                    InjectFreeSqlFilter(options, ref freeSql, item.Key);
+
+                    //全局Aop
+                    if (options.Aop != null)
+                    {
+                        options.Aop.Invoke(freeSql);
+                    }
+
+                    return freeSql;
+                });
+            }
+        }
 
         /// <summary>
         /// 初始化配置
