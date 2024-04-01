@@ -11,8 +11,8 @@ namespace FreeSql.SharingCore.Assemble
         /// <summary>
         /// 根据条件获取对应的数据库实例，支持多租户
         /// </summary>
-        /// <remarks>如果存在租户：Basics_Tenant01_2022</remarks>
-        /// <remarks>如果不存在租户：Basics_2022</remarks>
+        /// <remarks>如果存在租户：Basics_2024_Tenant01</remarks>
+        /// <remarks>如果不存在租户：Basics_2024</remarks>
         /// <param name="ident">数据库标识</param>
         /// <param name="separateDbIdent">分库标识，默认是当前年</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
@@ -32,8 +32,8 @@ namespace FreeSql.SharingCore.Assemble
         /// <summary>
         /// 根据条件获取对应的数据库实例，支持多租户
         /// </summary>
-        /// <remarks>如果存在租户：Basics_Tenant01_xxx</remarks>
-        /// <remarks>如果不存在租户：Basics_xxx</remarks>
+        /// <remarks>如果存在租户：Basics_2024_Tenant01</remarks>
+        /// <remarks>如果不存在租户：Basics_2024</remarks>
         /// <param name="ident">数据库标识</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
         /// <returns></returns>
@@ -55,8 +55,8 @@ namespace FreeSql.SharingCore.Assemble
         /// <summary>
         /// 根据条件获取对应的数据库实例，支持多租户
         /// </summary>
-        /// <remarks>如果存在租户：Basics_Tenant01_2022</remarks>
-        /// <remarks>如果不存在租户：Basics_2022</remarks>
+        /// <remarks>如果存在租户：Basics_2024_Tenant01</remarks>
+        /// <remarks>如果不存在租户：Basics_2024</remarks>
         /// <param name="ident">数据库标识</param>
         /// <param name="separateDbIdent">分库标识，默认是当前年</param>
         /// <param name="tenant">租户标识，默认没有租户</param>
