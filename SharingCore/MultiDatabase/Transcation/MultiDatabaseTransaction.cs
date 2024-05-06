@@ -19,10 +19,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             _dbWarp1 = dbWarp1;
             _dbWarp2 = dbWarp2;
             _internel = new DistributedTransaction(new DbWarp[] { dbWarp1, dbWarp2 });
-            _internel.OnCommitFail += (s, warp, ex) =>
-            {
-                OnCommitFail?.Invoke(s,warp,ex);
-            };
+            _internel.OnCommitFail += (s, warp, ex) => { OnCommitFail?.Invoke(s, warp, ex); };
         }
 
         public void BeginTran()
@@ -42,6 +39,44 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
         public void Dispose() => _internel.Dispose();
     }
 
+    public class MultiDatabaseTransaction : IDisposable
+    {
+        private DistributedTransaction _internel;
+
+        private IEnumerable<DbWarp> _dbWarps;
+
+        private Dictionary<string, DTranFreeSql> Orms = new Dictionary<string, DTranFreeSql>();
+
+        public event Action<string, DbWarp, Exception>? OnCommitFail;
+
+        public MultiDatabaseTransaction(IEnumerable<DbWarp> warps)
+        {
+            _dbWarps = warps;
+            _internel = new DistributedTransaction(warps);
+            _internel.OnCommitFail += (s, warp, ex) => { OnCommitFail?.Invoke(s, warp, ex); };
+        }
+
+        public void BeginTran()
+        {
+            _internel.BeginTran();
+            foreach (var dbWarp in _dbWarps)
+            {
+                Orms.Add(dbWarp.Name, new DTranFreeSql(dbWarp.Instance, _internel.Transactions[dbWarp.Name]));
+            }
+        }
+
+        public void Rellback() => _internel.Rellback();
+
+        public List<TransactionsResult> Commit(multi_transaction_log log) => _internel.Commit(log);
+
+        public DTranFreeSql GetOrm(string dbName) => Orms[dbName];
+
+        //析构函数
+        ~MultiDatabaseTransaction() => Dispose();
+
+        public void Dispose() => _internel.Dispose();
+    }
+
     public class MultiDatabaseTransaction3 : IDisposable
     {
         private DistributedTransaction local;
@@ -55,7 +90,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
 
         public MultiDatabaseTransaction3(DbWarp dbWarp1, DbWarp dbWarp2, DbWarp dbWarp3)
         {
-            local = new DistributedTransaction(new DbWarp[] { dbWarp1, dbWarp2 ,dbWarp3});
+            local = new DistributedTransaction(new DbWarp[] { dbWarp1, dbWarp2, dbWarp3 });
             _dbWarp1 = dbWarp1;
             _dbWarp2 = dbWarp2;
             _dbWarp3 = dbWarp3;

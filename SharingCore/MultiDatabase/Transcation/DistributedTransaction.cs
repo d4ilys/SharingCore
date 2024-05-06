@@ -23,13 +23,13 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
         private Dictionary<string, Object<DbConnection>> _connections = new Dictionary<string, Object<DbConnection>>();
 
         //用到的事务
-        internal Dictionary<string, DbTransaction> Transactions = new Dictionary<string, DbTransaction>();
+        public Dictionary<string, DbTransaction> Transactions = new Dictionary<string, DbTransaction>();
 
         //日志ID
         private long logId = 0;
 
         //监听错误提交事件
-        internal event Action<string, DbWarp, Exception>? OnCommitFail = null;
+        public event Action<string, DbWarp, Exception>? OnCommitFail = null;
 
         //构造方法
         public DistributedTransaction(IEnumerable<DbWarp> fsqlWarpCollect) => _fsqlWarpCollect = fsqlWarpCollect;
@@ -167,7 +167,6 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             CurrentSqlLogContext.ClearSqlLog();
             return resultDictionary;
         }
-        
 
         public void Rellback()
         {

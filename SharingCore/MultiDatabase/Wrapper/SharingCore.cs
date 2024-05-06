@@ -32,6 +32,21 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
 
         /// <summary>
         /// 多库事务
+        /// </summary>
+        /// <param name="dbWarps"></param>
+        /// <returns></returns>
+        public static MultiDatabaseTransaction TransactionMany(IEnumerable<DbWarp> dbWarps)
+        {
+            var local = new AsyncLocal<MultiDatabaseTransaction>
+            {
+                Value = new MultiDatabaseTransaction(dbWarps)
+            };
+
+            return local.Value;
+        }
+
+        /// <summary>
+        /// 多库事务
         /// </summar y>
         /// <param name="param">Db包装类</param>
         /// <returns></returns>
