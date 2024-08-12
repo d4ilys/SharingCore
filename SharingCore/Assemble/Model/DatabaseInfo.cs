@@ -55,6 +55,6 @@ namespace FreeSql.SharingCore
 
         public List<DatabaseInfo> DatabaseInfo { get; set; }
 
-        public List<SeparateRule> SeparateRules { get; set; }
+        public List<SeparateRule> SeparateRules { get; set; } = new List<SeparateRule>();
     }
 }

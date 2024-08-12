@@ -255,9 +255,24 @@ namespace FreeSql.SharingCore.Assemble
             if (options?.DatabaseOptions != null)
             {
                 var exist = options.DatabaseOptions.TryGetValue(dbKey, out var value);
-                if (exist && value != null && value.FreeSqlFilterExpression != null)
+                if (exist && value != null && value.FreeSqlFilterExpression.Any())
                 {
-                    db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", value.FreeSqlFilterExpression);
+                    foreach (var ex in value.FreeSqlFilterExpression)
+                    {
+                        db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", ex);
+                    }
+
+                    flag = false;
+                }
+
+                if (exist && value != null && value.FreeSqlIfFilterExpression.Any())
+                {
+                    foreach (var ex in value.FreeSqlIfFilterExpression)
+                    {
+                        db.GlobalFilter.ApplyIf($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", ex.Condition, ex.Expression,
+                            ex.Before);
+                    }
+
                     flag = false;
                 }
             }
@@ -265,12 +280,23 @@ namespace FreeSql.SharingCore.Assemble
             if (flag)
             {
                 //FreeSqlBuilder扩展
-                if (options.TogetherDatabaseOption != null)
+                if (options?.TogetherDatabaseOption != null)
                 {
-                    if (options.TogetherDatabaseOption.FreeSqlFilterExpression != null)
+                    if (options.TogetherDatabaseOption.FreeSqlFilterExpression.Any())
                     {
-                        db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}",
-                            options.TogetherDatabaseOption.FreeSqlFilterExpression);
+                        foreach (var ex in options.TogetherDatabaseOption.FreeSqlFilterExpression)
+                        {
+                            db.GlobalFilter.Apply($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", ex);
+                        }
+                    }
+
+                    if (options.TogetherDatabaseOption.FreeSqlIfFilterExpression.Any())
+                    {
+                        foreach (var ex in options.TogetherDatabaseOption.FreeSqlIfFilterExpression)
+                        {
+                            db.GlobalFilter.ApplyIf($"{dbKey}_GlobalFilters_{Guid.NewGuid()}", ex.Condition,
+                                ex.Expression, ex.Before);
+                        }
                     }
                 }
             }

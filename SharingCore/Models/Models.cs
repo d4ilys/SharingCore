@@ -77,16 +77,45 @@ namespace FreeSql.SharingCore
         /// </summary>
         public Func<FreeSqlBuilder, FreeSqlBuilder>? FreeSqlBuilderInject { get; set; } = null;
 
-        internal dynamic? FreeSqlFilterExpression = null;
+
+        internal List<dynamic?> FreeSqlFilterExpression = new List<dynamic?>();
+
+        internal List<ApplyIfFilterDescribe> FreeSqlIfFilterExpression = new List<ApplyIfFilterDescribe>();
 
         /// <summary>
-        /// FreeSql 全局过滤器
+        /// FreeSql Apply 全局过滤器
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="expression"></param>
-        public void FreeSqlFilter<T>(Expression<Func<T, bool>> expression)
+        public void ApplyFilter<T>(Expression<Func<T, bool>> expression)
         {
-            FreeSqlFilterExpression = expression;
+            FreeSqlFilterExpression.Add(expression);
         }
+
+        /// <summary>
+        /// FreeSql Apply 全局过滤器
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="condition"></param>
+        /// <param name="expression"></param>
+        /// <param name="before"></param>
+        public void ApplyIfFilter<T>(Func<bool> condition, Expression<Func<T, bool>> expression, bool before = false)
+        {
+            FreeSqlIfFilterExpression.Add(new ApplyIfFilterDescribe
+            {
+                Condition = condition,
+                Expression = expression,
+                Before = before
+            });
+        }
+    }
+
+    internal class ApplyIfFilterDescribe
+    {
+        public Func<bool> Condition { get; set; }
+
+        public dynamic? Expression { get; set; } = null;
+
+        public bool Before { get; set; }
     }
 }

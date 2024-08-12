@@ -78,7 +78,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                         }
                         catch (Exception e)
                         {
-                            tran.Rellback();
+                            tran.Rollback();
                         }
                     }
                 }

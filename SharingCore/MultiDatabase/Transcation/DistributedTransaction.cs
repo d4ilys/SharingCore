@@ -99,7 +99,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
                             Key = kv.Key,
                             Successful = false
                         });
-                        Rellback();
+                        Rollback();
                         SharingCoreUtils.LogWarning($"多库事务提交：{kv.Key}，第一个库发生异常，其他全部回滚.");
                         break;
                     }
@@ -168,7 +168,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             return resultDictionary;
         }
 
-        public void Rellback()
+        public void Rollback()
         {
             foreach (var kv in Transactions)
             {

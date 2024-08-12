@@ -29,7 +29,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             Orm2 = new DTranFreeSql(_dbWarp2.Instance, _internel.Transactions[_dbWarp2.Name]);
         }
 
-        public void Rellback() => _internel.Rellback();
+        public void Rellback() => _internel.Rollback();
 
         public List<TransactionsResult> Commit(multi_transaction_log log) => _internel.Commit(log);
 
@@ -65,7 +65,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             }
         }
 
-        public void Rellback() => _internel.Rellback();
+        public void Rellback() => _internel.Rollback();
 
         public List<TransactionsResult> Commit(multi_transaction_log log) => _internel.Commit(log);
 
@@ -106,7 +106,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Transcation
             Orm3 = new DTranFreeSql(_dbWarp3.Instance, local.Transactions[_dbWarp3.Name]);
         }
 
-        public void Rellback() => local.Rellback();
+        public void Rellback() => local.Rollback();
 
         public List<TransactionsResult> Commit(multi_transaction_log log) => local.Commit(log);
 
