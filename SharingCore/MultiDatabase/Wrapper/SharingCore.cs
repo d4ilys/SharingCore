@@ -168,11 +168,11 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="func">执行的委托</param>
-        /// <param name="queryParamAction">入参委托</param>
+        /// <param name="condition">入参委托</param>
         /// <param name="compensation">事务补偿委托</param>
         /// <returns></returns>
         public static bool NoQuery<T>(Action<NoQueryFuncParam> func,
-            Action<NoQueryParam> queryParamAction, Action<string, DbWarp, Exception>? compensation = null)
+            Action<NoQueryParam> condition, Action<string, DbWarp, Exception>? compensation = null)
         {
             var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
             if (compensation == null)
@@ -180,7 +180,12 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
                 multiDatabaseNoQuery.OnCommitFail = compensation;
             }
 
-            var result = multiDatabaseNoQuery.NoQuery<T>(func, queryParamAction);
+            var result = multiDatabaseNoQuery.NoQueryAsync<T>(param =>
+            {
+                func(param);
+                return Task.CompletedTask;
+            }, condition).GetAwaiter().GetResult();
+
             return result;
         }
 
@@ -189,11 +194,11 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="func">执行的委托</param>
-        /// <param name="queryParamAction">入参委托</param>
+        /// <param name="condition">入参委托</param>
         /// <param name="compensation">事务补偿委托</param>
         /// <returns></returns>
-        public static bool NoQuery(Action<NoQueryFuncParam> func,
-            Action<NoQueryParam> queryParamAction, Action<string, DbWarp, Exception>? compensation = null)
+        public static async Task<bool> NoQueryAsync<T>(Func<NoQueryFuncParam, Task> func,
+            Action<NoQueryParam> condition, Action<string, DbWarp, Exception>? compensation = null)
         {
             var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
             if (compensation == null)
@@ -201,22 +206,88 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
                 multiDatabaseNoQuery.OnCommitFail = compensation;
             }
 
-            var result = multiDatabaseNoQuery.NoQuery(func, queryParamAction);
+            var result = await multiDatabaseNoQuery.NoQueryAsync<T>(func, condition);
             return result;
         }
 
+        /// <summary>
+        /// 增删改跨库操作
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="func">执行的委托</param>
+        /// <param name="condition">入参委托</param>
+        /// <param name="compensation">事务补偿委托</param>
+        /// <returns></returns>
+        public static bool NoQuery(Action<NoQueryFuncParam> func,
+            Action<NoQueryParam> condition, Action<string, DbWarp, Exception>? compensation = null)
+        {
+            var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
+            if (compensation == null)
+            {
+                multiDatabaseNoQuery.OnCommitFail = compensation;
+            }
+
+            var result = multiDatabaseNoQuery.NoQueryAsync(p =>
+            {
+                func(p);
+                return Task.CompletedTask;
+            }, condition).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            return result;
+        }
+
+        /// <summary>
+        /// 增删改跨库操作
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="func">执行的委托</param>
+        /// <param name="condition">入参委托</param>
+        /// <param name="compensation">事务补偿委托</param>
+        /// <returns></returns>
+        public static async Task<bool> NoQueryAsync(Func<NoQueryFuncParam, Task> func,
+            Action<NoQueryParam> condition, Action<string, DbWarp, Exception>? compensation = null)
+        {
+            var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
+            if (compensation == null)
+            {
+                multiDatabaseNoQuery.OnCommitFail = compensation;
+            }
+
+            var result = await multiDatabaseNoQuery.NoQueryAsync(func, condition);
+
+            return result;
+        }
 
         /// <summary>
         /// 跨库操作
         /// </summary>
         /// <param name="dbAction">跨年数据库</param>
-        /// <param name="queryParamAction">定位参数</param>
+        /// <param name="condition">注意 委托内异常需要处理</param>
         /// <returns></returns>
-        public static void Handle(Action<IFreeSql> dbAction,
-            Action<NoQueryParam> queryParamAction)
+        public static bool Handle(Action<IFreeSql> dbAction,
+            Action<NoQueryParam> condition)
         {
             var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
-            var result = multiDatabaseNoQuery.Handle(dbAction, queryParamAction);
+            var result = multiDatabaseNoQuery.HandleAsync(p =>
+            {
+                dbAction(p);
+                return Task.CompletedTask;
+            }, condition);
+            return result.ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        /// <summary>
+        /// 跨库操作
+        /// </summary>
+        /// <param name="dbAction">跨年数据库</param>
+        /// <param name="condition">注意 委托内异常需要处理</param>
+        /// <returns></returns>
+        public static async Task<bool> HandleAsync(Func<IFreeSql, Task> dbAction,
+            Action<NoQueryParam> condition)
+        {
+            var multiDatabaseNoQuery = new MultiDatabaseNoQuery();
+            var result = await multiDatabaseNoQuery.HandleAsync(dbAction, condition);
+            return result;
         }
 
         /// <summary>
@@ -224,7 +295,7 @@ namespace FreeSql.SharingCore.MultiDatabase.Wrapper
         /// </summary>
         public static SharingCoreDbs Dbs
         {
-            get { return new SharingCoreDbs(); }
+            get => new SharingCoreDbs();
             private set { }
         }
     }

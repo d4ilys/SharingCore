@@ -23,8 +23,7 @@ namespace SeparateDatabaseTable
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             TenantContext.SetTenant("lemi");
-            TestAppend();
-            await SeparateDatatableAsync();
+            await SeparateDatatableInitAsync();
         }
 
         #region 分库
@@ -41,55 +40,70 @@ namespace SeparateDatabaseTable
         public async Task SeparateDatatableInitAsync()
         {
             //自动创建表
-            var list = await SharingCore.QueryAsync(query =>
-            {
-                query.Db.CodeFirst.SyncStructure<back_order>();
-                return new List<string>();
-            }, query => query.Init(Dbs.Order(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
+            var list = Handle(db => db.CodeFirst.SyncStructure<back_order>(),
+                query => query.Init(Dbs.Order(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
+
+            ////通过日期范围进行插入 
+            //NoQuery(noQuery =>
+            //    {
+            //        noQuery.Db.Insert(new back_order
+            //            {
+            //                reason = "2023-08-05订单取消"
+            //            })
+            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+            //            .ExecuteAffrows();
+
+            //        noQuery.Db.Insert(new back_order
+            //            {
+            //                reason = "2023-08-05订单取消"
+            //            })
+            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+            //            .ExecuteAffrows();
+            //    },
+            //    param => param.Init(Dbs.Order(), DateTime.Parse("2023-08-07"),
+            //        DateTime.Parse("2023-08-07")), //只会写入到2023年的库
+            //    //事务补偿
+            //    (logId, dbWarp, exception) => { });
+
+
+            ////通过日期范围进行插入 
+            //await NoQueryAsync(async noQuery =>
+            //    {
+            //        await noQuery.Db.Insert(new back_order
+            //            {
+            //                reason = "2022-08-07订单取消"
+            //            })
+            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+            //            .ExecuteAffrowsAsync();
+
+            //        await noQuery.Db.Insert(new back_order
+            //            {
+            //                reason = "2022-08-06订单取消"
+            //            })
+            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+            //            .ExecuteAffrowsAsync();
+            //    },
+            //    param => param.Init(Dbs.Order(), DateTime.Parse("2022-01-07"), DateTime.Parse("2022-02-07")));
 
             //通过日期范围进行插入 
-            SharingCore.NoQuery<back_order>(noQuery =>
+            var r = await NoQueryAsync(async noQuery =>
                 {
-                    noQuery.Db.Insert(new back_order
-                        {
-                            reason = "2023-08-05订单取消"
-                        })
-                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-                        .ExecuteAffrows();
-
-                    noQuery.Db.Insert(new back_order
-                        {
-                            reason = "2023-08-05订单取消"
-                        })
-                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-                        .ExecuteAffrows();
-                },
-                param => param.Init(Dbs.Order(), DateTime.Parse("2023-08-07"),
-                    DateTime.Parse("2023-08-07")), //只会写入到2023年的库
-                //事务补偿
-                (logId, dbWarp, exception) => { });
-
-
-            //通过日期范围进行插入 
-            SharingCore.NoQuery<back_order>(noQuery =>
-                {
-                    noQuery.Db.Insert(new back_order
+                    await noQuery.Db.Insert(new back_order
                         {
                             reason = "2022-08-07订单取消"
                         })
                         .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-                        .ExecuteAffrows();
-                    noQuery.Db.Insert(new back_order
+                        .ExecuteAffrowsAsync();
+                    await noQuery.Db.Insert(new back_order
                         {
-                            reason = "2022-08-06订单取消"
+                            reason = "2023-08-06订单取消"
                         })
                         .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-                        .ExecuteAffrows();
+                        .ExecuteAffrowsAsync();
                 },
-                param => param.Init(Dbs.Order(), DateTime.Parse("2022-08-07"),
-                    DateTime.Parse("2022-02-07")), //只会写入到2022年的库
-                //事务补偿
-                (logId, dbWarp, exception) => { });
+                param => param.Init(Dbs.Order(), DateTime.Parse("2022-08-07"), DateTime.Parse("2023-02-07")));
+
+            Console.WriteLine(r);
         }
 
 
@@ -244,7 +258,6 @@ namespace SeparateDatabaseTable
             Console.WriteLine(JsonConvert.SerializeObject(SharingCoreUtils.DatabaseConfig.DatabaseInfo));
             Console.WriteLine(JsonConvert.SerializeObject(SharingCoreUtils.DatabaseConfig.SeparateRules));
             Console.WriteLine(JsonConvert.SerializeObject(SharingCoreUtils.Options));
-
         }
 
         #endregion
@@ -252,7 +265,9 @@ namespace SeparateDatabaseTable
 
     public class back_order
     {
-        [Column(IsIdentity = true)] public int Id { get; set; }
+        [Column(IsIdentity = true)]
+        public int Id { get; set; }
+
         public string reason { get; set; }
     }
 
@@ -260,7 +275,8 @@ namespace SeparateDatabaseTable
     [Table(Name = "log_{yyyyMMdd}", AsTable = "createtime=2023-8-1(1 day)")]
     public class logs
     {
-        [Column(IsIdentity = true)] public int Id { get; set; }
+        [Column(IsIdentity = true)]
+        public int Id { get; set; }
 
         public string content { get; set; }
 

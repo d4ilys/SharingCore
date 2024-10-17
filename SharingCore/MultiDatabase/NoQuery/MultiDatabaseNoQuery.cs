@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Threading.Tasks;
 using FreeSql.SharingCore.Assemble.Model;
 using FreeSql.SharingCore.Common;
 using FreeSql.SharingCore.Extensions;
@@ -25,7 +26,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
         /// <param name="func">分页执行的委托</param>
         /// <param name="queryParamAction">入参委托</param>
         /// <returns></returns>
-        public bool NoQuery<T>(Action<NoQueryFuncParam> func,
+        public async Task<bool> NoQueryAsync<T>(Func<NoQueryFuncParam, Task> func,
             Action<NoQueryParam> queryParamAction)
         {
             var result = false;
@@ -40,7 +41,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                 var dbWarpList = new List<DbWarp>();
                 foreach (var year in dbNamesByTimeRange)
                 {
-                    var dbWarp = DbWarpFactory.GetByKey(year,"");
+                    var dbWarp = DbWarpFactory.GetByKey(year, "");
                     dbWarpList.Add(dbWarp);
                 }
 
@@ -66,7 +67,7 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                             //多库操作，传递事务
                             foreach (var dbWarp in dbWarpList)
                             {
-                                func.Invoke(new NoQueryFuncParam()
+                                await func.Invoke(new NoQueryFuncParam()
                                 {
                                     Db = dbWarp.Instance,
                                     Transaction = tran.Transactions[dbWarp.Name]
@@ -94,23 +95,38 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                         //获取连接池对象
                         using (var tran = dbWarp?.Instance.CreateUnitOfWork())
                         {
-                            //执行委托
-                            func.Invoke(new NoQueryFuncParam()
+                            try
                             {
-                                Db = dbWarp.Instance,
-                                Transaction = tran.GetOrBeginTransaction()
-                            });
-                            tran.Commit();
-                            result = true;
+                                //执行委托
+                                await func.Invoke(new NoQueryFuncParam()
+                                {
+                                    Db = dbWarp.Instance,
+                                    Transaction = tran.GetOrBeginTransaction()
+                                });
+                                tran.Commit();
+                                result = true;
+                            }
+                            catch
+                            {
+                                tran.Rollback();
+                                result = false;
+                            }
                         }
                     }
                     else
                     {
-                        func.Invoke(new NoQueryFuncParam()
+                        try
                         {
-                            Db = dbWarp.Instance,
-                            Transaction = null
-                        });
+                            await func.Invoke(new NoQueryFuncParam()
+                            {
+                                Db = dbWarp.Instance,
+                                Transaction = null
+                            });
+                        }
+                        catch
+                        {
+                            result = false;
+                        }
                     }
                 }
             }
@@ -123,14 +139,13 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
             return result;
         }
 
-
         /// <summary>
-        /// 跨库操作 无事务
+        /// 跨库操作
         /// </summary>
         /// <param name="dbAction">分库操作</param>
         /// <param name="queryParamAction">入参委托</param>
         /// <returns></returns>
-        public bool Handle(Action<IFreeSql> dbAction,
+        public async Task<bool> HandleAsync(Func<IFreeSql, Task> dbAction,
             Action<NoQueryParam> queryParamAction)
         {
             var result = false;
@@ -145,13 +160,22 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
                 foreach (var year in dbNamesByTimeRange)
                 {
                     var db = year.GetFreeSqlByKey();
-                    dbAction.Invoke(db);
+                    try
+                    {
+                        await dbAction.Invoke(db);
+                    }
+                    catch (Exception e)
+                    {
+                        SharingCoreUtils.LogError($"Handle - {year} 操作失败, {e}");
+                    }
                 }
+
+                result = true;
             }
             catch (Exception e)
             {
-                SharingCoreUtils.LogError($"NoQuery 操作失败, {e.ToString()}");
-                throw;
+                result = false;
+                SharingCoreUtils.LogError($"Handle 操作失败, {e.ToString()}");
             }
 
             return result;
@@ -163,10 +187,10 @@ namespace FreeSql.SharingCore.MultiDatabase.NoQuery
         /// <param name="func">分页执行的委托</param>
         /// <param name="queryParamAction">入参委托</param>
         /// <returns></returns>
-        public bool NoQuery(Action<NoQueryFuncParam> func,
+        public async Task<bool> NoQueryAsync(Func<NoQueryFuncParam, Task> func,
             Action<NoQueryParam> queryParamAction)
         {
-            return NoQuery<string>(func, queryParamAction);
+            return await NoQueryAsync<string>(func, queryParamAction);
         }
     }
 }
