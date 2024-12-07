@@ -43,47 +43,47 @@ namespace SeparateDatabaseTable
             var list = Handle(db => db.CodeFirst.SyncStructure<back_order>(),
                 query => query.Init(Dbs.Order(), DateTime.Parse("2022-02-01"), DateTime.Parse("2023-05-01")));
 
-            ////通过日期范围进行插入 
-            //NoQuery(noQuery =>
-            //    {
-            //        noQuery.Db.Insert(new back_order
-            //            {
-            //                reason = "2023-08-05订单取消"
-            //            })
-            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-            //            .ExecuteAffrows();
+            //通过日期范围进行插入 
+            NoQuery(noQuery =>
+                {
+                    noQuery.Db.Insert(new back_order
+                    {
+                        reason = "2023-08-05订单取消"
+                    })
+                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+                        .ExecuteAffrows();
 
-            //        noQuery.Db.Insert(new back_order
-            //            {
-            //                reason = "2023-08-05订单取消"
-            //            })
-            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-            //            .ExecuteAffrows();
-            //    },
-            //    param => param.Init(Dbs.Order(), DateTime.Parse("2023-08-07"),
-            //        DateTime.Parse("2023-08-07")), //只会写入到2023年的库
-            //    //事务补偿
-            //    (logId, dbWarp, exception) => { });
+                    noQuery.Db.Insert(new back_order
+                    {
+                        reason = "2023-08-05订单取消"
+                    })
+                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+                        .ExecuteAffrows();
+                },
+                param => param.Init(Dbs.Order(), DateTime.Parse("2023-08-07"),
+                    DateTime.Parse("2023-08-07")), //只会写入到2023年的库
+                                                   //事务补偿
+                (logId, dbWarp, exception) => { });
 
 
-            ////通过日期范围进行插入 
-            //await NoQueryAsync(async noQuery =>
-            //    {
-            //        await noQuery.Db.Insert(new back_order
-            //            {
-            //                reason = "2022-08-07订单取消"
-            //            })
-            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-            //            .ExecuteAffrowsAsync();
+            //通过日期范围进行插入 
+            await NoQueryAsync(async noQuery =>
+                {
+                    await noQuery.Db.Insert(new back_order
+                    {
+                        reason = "2022-08-07订单取消"
+                    })
+                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+                        .ExecuteAffrowsAsync();
 
-            //        await noQuery.Db.Insert(new back_order
-            //            {
-            //                reason = "2022-08-06订单取消"
-            //            })
-            //            .WithTransaction(noQuery.Transaction) //可以保证跨库事务
-            //            .ExecuteAffrowsAsync();
-            //    },
-            //    param => param.Init(Dbs.Order(), DateTime.Parse("2022-01-07"), DateTime.Parse("2022-02-07")));
+                    await noQuery.Db.Insert(new back_order
+                    {
+                        reason = "2022-08-06订单取消"
+                    })
+                        .WithTransaction(noQuery.Transaction) //可以保证跨库事务
+                        .ExecuteAffrowsAsync();
+                },
+                param => param.Init(Dbs.Order(), DateTime.Parse("2022-01-07"), DateTime.Parse("2022-02-07")));
 
             //通过日期范围进行插入 
             var r = await NoQueryAsync(async noQuery =>

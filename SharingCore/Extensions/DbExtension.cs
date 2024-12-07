@@ -3,7 +3,11 @@ using FreeSql.SharingCore.Assemble.Model;
 using FreeSql.SharingCore.Common;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using FreeSql.SharingCore.MultiDatabase.AsTable;
+using Math = System.Math;
 
 namespace FreeSql.SharingCore.Extensions
 {
@@ -27,6 +31,35 @@ namespace FreeSql.SharingCore.Extensions
             return service;
         }
 
+        /// <summary>
+        /// 根据分片键获取对应的FreeSql对象，并自动为分片表增加所在的片的后缀
+        /// </summary>
+        /// <param name="dbName"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static IFreeSql GetHorizontalShardingFreeSql(this string dbName, string key)
+        {
+            var hash = Math.Abs(key.GetHashCode());
+            var rule = SharingCoreUtils.DatabaseConfig.HorizontalShardingRules.FirstOrDefault();
+            if (rule == null)
+            {
+                throw new Exception($"{dbName},未设置HorizontalShardingRule");
+            }
+
+            //取模
+            var locationShard = hash % rule.ShardingCount;
+
+            var gsTableOnDatabase = SharingCoreUtils.GeHorizontalShardingTableOnDatabase(rule);
+
+            var keyValuePair = gsTableOnDatabase.First(pair => pair.Value.Contains(locationShard));
+
+            //根据分库标识获取数据库实例
+            var orm = dbName.GetFreeSql(keyValuePair.Key.ToString());
+
+            return new IncreaseAsTableFreeSql(orm, $"_{ locationShard.ToString()}");
+
+        }
 
         /// <summary>
         /// 直接通过数据库标识获取FreeSql对象

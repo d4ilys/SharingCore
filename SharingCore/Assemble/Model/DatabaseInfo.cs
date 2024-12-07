@@ -43,7 +43,15 @@ namespace FreeSql.SharingCore
         /// 分库规则
         /// </summary>
         public string? Separate { get; set; }
+    }
 
+    public class HorizontalShardingRule
+    {
+        public string Name { get; set; }
+
+        public int DatabaseCount { get; set; }
+
+        public int ShardingCount { get; set; }
     }
 
     public class SharingCoreDbConfig
@@ -56,5 +64,6 @@ namespace FreeSql.SharingCore
         public List<DatabaseInfo> DatabaseInfo { get; set; }
 
         public List<SeparateRule> SeparateRules { get; set; } = new List<SeparateRule>();
+        public List<HorizontalShardingRule> HorizontalShardingRules { get; set; } = new List<HorizontalShardingRule>();
     }
 }

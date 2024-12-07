@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using FreeSql.SharingCore.Assemble;
 using FreeSql.SharingCore.Context;
+using FreeSql.SharingCore.Extensions;
 using FreeSql.SharingCore.MultiDatabase.Transcation;
 using FreeSql.SharingCore.MultiDatabase.Wrapper;
 using Microsoft.Extensions.Configuration;
@@ -230,6 +232,83 @@ namespace FreeSql.SharingCore.Common
         public static List<string> IdleBusRegisterInfo()
         {
             return IdleBusProvider.Instance!.GetKeys().ToList();
+        }
+
+        private static readonly ConcurrentDictionary<string, Dictionary<int, List<int>>>
+            HorizontalShardingTableOnDatabaseCache = new ConcurrentDictionary<string, Dictionary<int, List<int>>>();
+
+        /// <summary>
+        /// 获取根据分片和数据库数量获取分片所在数据库分片索引
+        /// </summary>
+        /// <param name="rule">水平分片规则</param>
+        /// <returns></returns>
+        public static Dictionary<int, List<int>> GeHorizontalShardingTableOnDatabase(HorizontalShardingRule rule)
+        {
+            var key = $"${rule.Name}-{rule.ShardingCount}-{rule.DatabaseCount}";
+            return HorizontalShardingTableOnDatabaseCache.GetOrAdd(key, _ =>
+            {
+                var sharingCount = rule.ShardingCount;
+                var dbCount = rule.DatabaseCount;
+                var avg = Convert.ToInt32(Math.Floor((double)sharingCount / dbCount));
+                var dic = new Dictionary<int, List<int>>();
+                for (var i = 1; i <= dbCount; i++)
+                {
+                    var listCount = i == dbCount ? sharingCount : avg;
+                    var sharingList = new List<int>();
+                    for (var j = 1; j <= listCount; j++)
+                    {
+                        sharingList.Add(j);
+                    }
+
+                    dic.Add(i, sharingList);
+                    sharingCount -= avg;
+                }
+
+                var lastPage = dic.Last();
+                var firstPage = dic.First();
+
+                // 处理lastPage和firstPage的元素数量差
+                if (lastPage.Value.Count > firstPage.Value.Count)
+                {
+                    var diff = lastPage.Value.Count - firstPage.Value.Count;
+                    for (int o = 1; o <= diff; o++)
+                    {
+                        var lastPageLastChunk = lastPage.Value.Last();
+                        lastPage.Value.RemoveAt(lastPage.Value.Count - 1);
+                        var chunk = dic[o];
+                        chunk.Add(lastPageLastChunk);
+                    }
+                }
+
+                return dic;
+            });
+        }
+
+        /// <summary>
+        /// 生成水平分片所有表
+        /// </summary>
+        /// <returns></returns>
+        public static void GeHorizontalShardingTableOnDatabaseCodeFirst<T>(string dbName)
+        {
+            var rule = SharingCoreUtils.DatabaseConfig.HorizontalShardingRules.FirstOrDefault();
+            if (rule == null)
+            {
+                throw new Exception($"{dbName},未设置HorizontalShardingRule");
+            }
+
+            var dic = GeHorizontalShardingTableOnDatabase(rule);
+
+            foreach (var keyValuePair in dic)
+            {
+                var orm = dbName.GetFreeSql(keyValuePair.Key.ToString());
+                var tableByEntity = orm.CodeFirst.GetTableByEntity(typeof(T));
+                foreach (var i in keyValuePair.Value)
+                {
+                    var tableName = $"{tableByEntity.DbName}_{i}";
+                    orm.CodeFirst.SyncStructure(typeof(T), tableName);
+                    LogInformation($"{tableName},同步完成.");
+                }
+            }
         }
 
         /// <summary>
